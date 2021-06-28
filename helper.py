@@ -15,8 +15,8 @@ def get_segments_from_row(row):
 def get_segments_lengths_from_image(img):
     result = {}
     for d in np.arange(img.ndim):
-        true_lengths = np.array([])
-        false_lengths = np.array([])
+        true_lengths = np.array([], dtype=np.int32)
+        false_lengths = np.array([], dtype=np.int32)
         stripes = np.split(img, img.shape[d], axis=d)
         for stripe in stripes:
             segments = get_segments_from_row(stripe.ravel())
@@ -27,4 +27,4 @@ def get_segments_lengths_from_image(img):
             for fs in false_segments:
                 false_lengths = np.append(false_lengths, len(fs))
         result[d] = {'pores': false_lengths, 'solid': true_lengths}        
-    print(result)
+    return result
