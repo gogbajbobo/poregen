@@ -44,3 +44,7 @@ def kde_of_lengths(segments_lengths):
     pdf = kde.pdf(linspace)
     return kde, pdf, linspace
 
+
+def get_sample(kde):
+    result = np.int32(np.ceil(kde.resample(1)))[0]
+    return result if result > 0 else get_sample(kde) #TODO: recursion!!! need to break infinite loop if have one
