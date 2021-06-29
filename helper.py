@@ -42,7 +42,10 @@ def kde_of_lengths(segments_lengths):
     kde = stats.gaussian_kde(segments_lengths)
     linspace = np.linspace(1, max_value, num=max_value)
     pdf = kde.pdf(linspace)
-    return kde, pdf, linspace
+    cdf_values = [np.sum(pdf[:i]) for i in np.arange(max_value)]
+    def cdf(x):
+        return 0 if x <= 0 else 1 if x > max_value else cdf_values[np.int32(x)]
+    return kde, pdf, cdf, linspace
 
 
 def get_sample(kde):
