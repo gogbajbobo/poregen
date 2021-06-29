@@ -2,7 +2,7 @@ import numpy as np
 from scipy import stats
 
 
-def get_segments_from_row(row):
+def segments_from_row(row):
     borders = row[1:] != row[:-1]
     borders = np.append(borders, True)
     indices = np.where(borders)[0] + 1
@@ -13,14 +13,14 @@ def get_segments_from_row(row):
     return segments
 
 
-def get_segments_lengths_from_image(img):
+def segments_lengths_from_image(img):
     result = {}
     for d in np.arange(img.ndim):
         true_lengths = np.array([], dtype=np.int32)
         false_lengths = np.array([], dtype=np.int32)
         stripes = np.split(img, img.shape[d], axis=d)
         for stripe in stripes:
-            segments = get_segments_from_row(stripe.ravel())
+            segments = segments_from_row(stripe.ravel())
             true_segments = filter(lambda x: True in x, segments)
             false_segments = filter(lambda x: False in x, segments)
             for ts in true_segments:
