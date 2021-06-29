@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats
 
 
 def get_segments_from_row(row):
@@ -28,3 +29,18 @@ def get_segments_lengths_from_image(img):
                 false_lengths = np.append(false_lengths, len(fs))
         result[d] = {'pores': false_lengths, 'solid': true_lengths}        
     return result
+
+
+def hist_of_lengths(segments_lengths):
+    max_value = np.max(segments_lengths)
+    hist, edges = np.histogram(segments_lengths, bins=max_value, density=True)
+    return hist, edges
+
+
+def kde_of_lengths(segments_lengths):
+    max_value = np.max(segments_lengths)
+    kde = stats.gaussian_kde(segments_lengths)
+    linspace = np.linspace(1, max_value, num=max_value)
+    pdf = kde.pdf(linspace)
+    return kde, pdf, linspace
+
