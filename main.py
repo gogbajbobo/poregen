@@ -39,7 +39,7 @@ fig, axes = plt.subplots(1, 1, figsize=(5, 5))
 axes.imshow(img)
 
 # %%
-segments_lengths = helper.get_segments_lengths_from_image(img)
+segments_lengths = helper.segments_lengths_from_image(img)
 ndim = img.ndim
 
 fig, axes = plt.subplots(ndim * 2, 1, figsize=(10, ndim * 10))
