@@ -33,24 +33,27 @@ def segments_lengths_from_image(img):
 
 
 def hist_of_lengths(segments_lengths):
-    max_value = np.max(segments_lengths)
-    hist, edges = np.histogram(segments_lengths, bins=max_value, density=True)
+    max_value = np.max(segments_lengths) + 1
+    hist, edges = np.histogram(segments_lengths, range=(0, max_value), bins=max_value, density=True)
+#     print(f'hist: { hist }, hist sum: { np.sum(hist) }')
+#     print(f'edges: { edges }')
     return hist, edges
 
 
 def kde_of_lengths(segments_lengths):
-    max_value = np.max(segments_lengths)
+    max_value = np.max(segments_lengths) +1
     kde = stats.gaussian_kde(segments_lengths)
-    linspace = np.linspace(1, max_value, num=max_value, dtype=np.int32)
+    linspace = np.linspace(0, max_value, num=max_value + 1, dtype=np.int32)
+#     print(f'linspace: { linspace }')
     pdf = kde.pdf(linspace)
-    pdf[0] = 0
+#     pdf[0] = 0
     pdf = pdf / np.sum(pdf)
-    print(pdf)
-    cdf_values = [np.sum(pdf[:i]) for i in linspace]
-    print(cdf_values)
+#     print(f'pdf: { pdf }')
+    cdf_values = [np.sum(pdf[:i + 1]) for i in linspace]
+#     print(f'cdf_values: { cdf_values }')
     def cdf(x):
         x = 0 if x < 0 else x
-        x = max_value - 1 if x >= max_value else x
+        x = 1 if x > max_value else x
         return cdf_values[np.int32(x)]
     return kde, pdf, cdf, linspace
 
