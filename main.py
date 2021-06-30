@@ -59,7 +59,7 @@ for d in np.arange(ndim):
     
     axes[2 * d, 0].bar(p_edges[:-1], p_hist, width=np.diff(p_edges), edgecolor="black", align="edge")
     axes[2 * d, 0].plot(p_linspace, p_pdf, c='red')
-    axes[2 * d, 1].plot([p_cdf(x) for x in [0, *p_linspace]])
+    axes[2 * d, 1].plot([p_cdf(x) for x in p_linspace])
     axes[2 * d, 1].set_ylim([0, 1])
 
     solid_lengths = segments_lengths[d]['solid']
@@ -70,7 +70,7 @@ for d in np.arange(ndim):
     
     axes[2 * d + 1, 0].bar(s_edges[:-1], s_hist, width=np.diff(s_edges), edgecolor="black", align="edge")
     axes[2 * d + 1, 0].plot(s_linspace, s_pdf, c='red')
-    axes[2 * d + 1, 1].plot([s_cdf(x) for x in [0, *s_linspace]])
+    axes[2 * d + 1, 1].plot([s_cdf(x) for x in s_linspace])
     axes[2 * d + 1, 1].set_ylim([0, 1])
 
 # %%
@@ -119,10 +119,5 @@ for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
         probability_v = 1 - segments_cdfs[1][kind_v](y)
         print(last_seg_h, last_seg_v)
         print(probability_h, probability_v)
-
-# %%
-x = 1
-x = 0 if x < 0 else x
-x
 
 # %%
