@@ -27,7 +27,7 @@ import seaborn as sns
 import helper
 
 # %%
-im_size = 128
+im_size = 16
 dim = 2
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
@@ -105,5 +105,24 @@ synt_img_2d = np.zeros((im_size, im_size))
 synt_img_2d[0, :] = synt_img_h
 synt_img_2d[:, 0] = synt_img_v
 plt.imshow(synt_img_2d)
+
+# %%
+for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
+    for x in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
+        line_h = synt_img_2d[y, 0:x]
+        line_v = synt_img_2d[0:y, x]
+        last_seg_h = helper.segments_from_row(line_h)[-1]
+        last_seg_v = helper.segments_from_row(line_v)[-1]
+        kind_h = 'pores' if 0 in last_seg_h else 'solid'
+        kind_v = 'pores' if 0 in last_seg_v else 'solid'
+        probability_h = 1 - segments_cdfs[0][kind_h](x)
+        probability_v = 1 - segments_cdfs[1][kind_v](y)
+        print(last_seg_h, last_seg_v)
+        print(probability_h, probability_v)
+
+# %%
+x = 1
+x = 0 if x < 0 else x
+x
 
 # %%
