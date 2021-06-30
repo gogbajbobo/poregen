@@ -140,3 +140,6 @@ for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
 plt.imshow(synt_img_2d)
 
 # %%
+print(np.sum(synt_img_2d)/synt_img_2d.size)
+
+# %%
