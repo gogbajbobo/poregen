@@ -45,7 +45,7 @@ ndim = img.ndim
 segments_kdes = {}
 segments_cdfs = {}
 
-fig, axes = plt.subplots(ndim * 2, 1, figsize=(10, ndim * 10))
+fig, axes = plt.subplots(ndim * 2, 2, figsize=(20, ndim * 10))
 
 for d in np.arange(ndim):
     segments_kdes[d] = {}
@@ -57,8 +57,10 @@ for d in np.arange(ndim):
     segments_kdes[d]['pores'] = p_kde
     segments_cdfs[d]['pores'] = p_cdf
     
-    axes[2 * d].bar(p_edges[:-1], p_hist, width=np.diff(p_edges), edgecolor="black", align="edge")
-    axes[2 * d].plot(p_linspace, p_pdf, c='red')
+    axes[2 * d, 0].bar(p_edges[:-1], p_hist, width=np.diff(p_edges), edgecolor="black", align="edge")
+    axes[2 * d, 0].plot(p_linspace, p_pdf, c='red')
+    axes[2 * d, 1].plot([p_cdf(x) for x in [0, *p_linspace]])
+    axes[2 * d, 1].set_ylim([0, 1])
 
     solid_lengths = segments_lengths[d]['solid']
     s_hist, s_edges = helper.hist_of_lengths(solid_lengths)
@@ -66,8 +68,10 @@ for d in np.arange(ndim):
     segments_kdes[d]['solid'] = s_kde
     segments_cdfs[d]['solid'] = s_cdf
     
-    axes[2 * d + 1].bar(s_edges[:-1], s_hist, width=np.diff(s_edges), edgecolor="black", align="edge")
-    axes[2 * d + 1].plot(s_linspace, s_pdf, c='red')
+    axes[2 * d + 1, 0].bar(s_edges[:-1], s_hist, width=np.diff(s_edges), edgecolor="black", align="edge")
+    axes[2 * d + 1, 0].plot(s_linspace, s_pdf, c='red')
+    axes[2 * d + 1, 1].plot([s_cdf(x) for x in [0, *s_linspace]])
+    axes[2 * d + 1, 1].set_ylim([0, 1])
 
 # %%
 synt_img_h = np.array([])
@@ -90,8 +94,10 @@ while len(synt_img_v) < im_size:
 
 synt_img_h = synt_img_h[:im_size]
 synt_img_v = synt_img_v[:im_size]
-plt.plot(synt_img_h)
-plt.plot(synt_img_v)
+
+fig, axes = plt.subplots(1, 2, figsize=(20, 5))
+axes[0].plot(synt_img_h)
+axes[1].plot(synt_img_v)
 # print(f'porosity: { 1 - np.sum(synt_img)/ synt_img.size}')
 
 # %%
