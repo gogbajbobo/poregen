@@ -27,7 +27,7 @@ import seaborn as sns
 import helper
 
 # %%
-im_size = 16
+im_size = 128
 dim = 2
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
@@ -115,9 +115,28 @@ for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
         last_seg_v = helper.segments_from_row(line_v)[-1]
         kind_h = 'pores' if 0 in last_seg_h else 'solid'
         kind_v = 'pores' if 0 in last_seg_v else 'solid'
-        probability_h = 1 - segments_cdfs[0][kind_h](x)
-        probability_v = 1 - segments_cdfs[1][kind_v](y)
-        print(last_seg_h, last_seg_v)
-        print(probability_h, probability_v)
+        p_h = 1 - segments_cdfs[0][kind_h](len(last_seg_h))
+        p_v = 1 - segments_cdfs[1][kind_v](len(last_seg_v))
+        p_solid = 0
+        p_pores = 0
+        if kind_h == kind_v:
+            if kind_h == 'pores':
+                p_pores = p_h * p_v
+                p_solid = 1 - p_pores
+            else:
+                p_solid = p_h * p_v
+                p_pores = 1 - p_solid
+        else:
+            if kind_h == 'pores':
+                p_pores = p_h * (1 - p_v)
+                p_solid = 1 - p_pores
+            else:
+                p_solid = p_h * (1 - p_v)
+                p_pores = 1 - p_solid
+        result = sp.stats.bernoulli.rvs(p_solid)
+        synt_img_2d[y, x] = result
+#         print(last_seg_h, last_seg_v)
+#         print(p_solid, p_pores, result)
+plt.imshow(synt_img_2d)
 
 # %%
