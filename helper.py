@@ -53,7 +53,7 @@ def kde_of_lengths(segments_lengths):
 #     print(f'cdf_values: { cdf_values }')
     def cdf(x):
         x = 0 if x < 0 else x
-        x = 1 if x > max_value else x
+        x = max_value if x > max_value else x
         return cdf_values[np.int32(x)]
     return kde, pdf, cdf, linspace
 
