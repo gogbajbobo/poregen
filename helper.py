@@ -2,14 +2,15 @@ import numpy as np
 from scipy import stats
 
 
-def segments_from_row(row):
+def segments_from_row(row, remove_edges=False):
     borders = row[1:] != row[:-1]
     borders = np.append(borders, True)
     indices = np.where(borders)[0] + 1
     segments = np.split(row, indices)
 #     segments = np.array([elem.flatten() for elem in segments], dtype=object)[:-1]
     segments = list(elem.flatten() for elem in segments)[:-1]
-    segments = segments[1:-1] # rm lines on edges
+    if remove_edges:
+        segments = segments[1:-1]
     return segments
 
 
@@ -20,7 +21,7 @@ def segments_lengths_from_image(img):
         false_lengths = np.array([], dtype=np.int32)
         stripes = np.split(img, img.shape[d], axis=d)
         for stripe in stripes:
-            segments = segments_from_row(stripe.ravel())
+            segments = segments_from_row(stripe.ravel(), remove_edges=True)
             true_segments = filter(lambda x: True in x, segments)
             false_segments = filter(lambda x: False in x, segments)
             for ts in true_segments:
@@ -42,9 +43,15 @@ def kde_of_lengths(segments_lengths):
     kde = stats.gaussian_kde(segments_lengths)
     linspace = np.linspace(1, max_value, num=max_value, dtype=np.int32)
     pdf = kde.pdf(linspace)
+    pdf[0] = 0
+    pdf = pdf / np.sum(pdf)
+    print(pdf)
     cdf_values = [np.sum(pdf[:i]) for i in linspace]
+    print(cdf_values)
     def cdf(x):
-        return 0 if x <= 0 else None if x >= max_value else cdf_values[np.int32(x)]
+        x = 0 if x < 0 else x
+        x = max_value - 1 if x >= max_value else x
+        return cdf_values[np.int32(x)]
     return kde, pdf, cdf, linspace
 
 
