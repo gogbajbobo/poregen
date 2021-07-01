@@ -31,7 +31,7 @@ im_size = 128
 dim = 2
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
-img = ~ps.generators.blobs(im_shape, porosity=0.3, blobiness=2)
+img = ~ps.generators.blobs(im_shape, porosity=0.3, blobiness=.5)
 # img = np.array(img, dtype=np.int32)
 
 # %%
@@ -109,30 +109,38 @@ plt.imshow(synt_img_2d)
 # %%
 for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
     for x in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
+
         line_h = synt_img_2d[y, 0:x]
-        line_v = synt_img_2d[0:y, x]
         last_seg_h = helper.segments_from_row(line_h)[-1]
-        last_seg_v = helper.segments_from_row(line_v)[-1]
         kind_h = 'pores' if 0 in last_seg_h else 'solid'
-        kind_v = 'pores' if 0 in last_seg_v else 'solid'
         p_h = 1 - segments_cdfs[0][kind_h](len(last_seg_h))
+
+        line_v = synt_img_2d[0:y, x]
+        last_seg_v = helper.segments_from_row(line_v)[-1]
+        kind_v = 'pores' if 0 in last_seg_v else 'solid'
         p_v = 1 - segments_cdfs[1][kind_v](len(last_seg_v))
+
         p_solid = 0
         p_pores = 0
+
         if kind_h == kind_v:
             if kind_h == 'pores':
                 p_pores = p_h * p_v
-                p_solid = 1 - p_pores
+                p_solid = (1 - p_h) * (1 - p_v)
             else:
                 p_solid = p_h * p_v
-                p_pores = 1 - p_solid
+                p_pores = (1 - p_h) * (1 - p_v)
         else:
             if kind_h == 'pores':
                 p_pores = p_h * (1 - p_v)
-                p_solid = 1 - p_pores
+                p_solid = (1 - p_h) * p_v
             else:
                 p_solid = p_h * (1 - p_v)
-                p_pores = 1 - p_solid
+                p_pores = (1 - p_h) * p_v
+#         p_solid = np.sqrt(p_solid)
+#         p_pores = np.sqrt(p_pores)
+        p_solid /= p_solid + p_pores
+        p_pores /= p_solid + p_pores
         result = sp.stats.bernoulli.rvs(p_solid)
         synt_img_2d[y, x] = result
 #         print(last_seg_h, last_seg_v)
@@ -140,6 +148,40 @@ for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
 plt.imshow(synt_img_2d)
 
 # %%
-print(np.sum(synt_img_2d)/synt_img_2d.size)
+print(1 - np.sum(synt_img_2d)/synt_img_2d.size)
+
+# %%
+synt_img_segments_lengths = helper.segments_lengths_from_image(synt_img_2d)
+ndim = synt_img_2d.ndim
+synt_img_segments_kdes = {}
+synt_img_segments_cdfs = {}
+
+fig, axes = plt.subplots(ndim * 2, 2, figsize=(20, ndim * 10))
+
+for d in np.arange(ndim):
+    synt_img_segments_kdes[d] = {}
+    synt_img_segments_cdfs[d] = {}
+
+    pores_lengths = synt_img_segments_lengths[d]['pores']
+    p_hist, p_edges = helper.hist_of_lengths(pores_lengths)
+    p_kde, p_pdf, p_cdf, p_linspace = helper.kde_of_lengths(pores_lengths)
+    synt_img_segments_kdes[d]['pores'] = p_kde
+    synt_img_segments_cdfs[d]['pores'] = p_cdf
+    
+    axes[2 * d, 0].bar(p_edges[:-1], p_hist, width=np.diff(p_edges), edgecolor="black", align="edge")
+    axes[2 * d, 0].plot(p_linspace, p_pdf, c='red')
+    axes[2 * d, 1].plot([p_cdf(x) for x in p_linspace])
+    axes[2 * d, 1].set_ylim([0, 1])
+
+    solid_lengths = synt_img_segments_lengths[d]['solid']
+    s_hist, s_edges = helper.hist_of_lengths(solid_lengths)
+    s_kde, s_pdf, s_cdf, s_linspace = helper.kde_of_lengths(solid_lengths)
+    synt_img_segments_kdes[d]['solid'] = s_kde
+    synt_img_segments_cdfs[d]['solid'] = s_cdf
+    
+    axes[2 * d + 1, 0].bar(s_edges[:-1], s_hist, width=np.diff(s_edges), edgecolor="black", align="edge")
+    axes[2 * d + 1, 0].plot(s_linspace, s_pdf, c='red')
+    axes[2 * d + 1, 1].plot([s_cdf(x) for x in s_linspace])
+    axes[2 * d + 1, 1].set_ylim([0, 1])
 
 # %%
