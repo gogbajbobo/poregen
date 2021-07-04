@@ -21,13 +21,15 @@
 import porespy as ps
 import numpy as np
 import scipy as sp
+
+from matplotlib import cm
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 import helper
 
 # %%
-im_size = 128
+im_size = 32
 dim = 2
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
@@ -183,5 +185,44 @@ for d in np.arange(ndim):
     axes[2 * d + 1, 0].plot(s_linspace, s_pdf, c='red')
     axes[2 * d + 1, 1].plot([s_cdf(x) for x in s_linspace])
     axes[2 * d + 1, 1].set_ylim([0, 1])
+
+# %%
+fig, ax = plt.subplots(2, 2, subplot_kw={"projection": "3d"}, figsize=(20, 20))
+
+def m_func(i, j):
+    _i = i / 100
+    _j = j / 100
+    return _i * _j
+
+data = np.fromfunction(m_func, (101, 101))
+sqrt_data = np.sqrt(data)
+
+def diff_data_func(i, j):
+    _i = i / 100
+    _j = j / 100
+    return np.max([_i, _j]) -  _i * _j
+
+def diff_sqrt_data_func(i, j):
+    _i = i / 100
+    _j = j / 100
+    return np.max([_i, _j]) -  np.sqrt(_i * _j)
+
+diff_data = np.fromfunction(np.vectorize(diff_data_func), (101, 101))
+diff_sqrt_data = np.fromfunction(np.vectorize(diff_sqrt_data_func), (101, 101))
+
+x = y = np.linspace(0, 1, 101)
+x, y = np.meshgrid(x, y)
+ax[0, 0].plot_surface(x, y, data, cmap=cm.coolwarm)
+ax[0, 1].plot_surface(x, y, sqrt_data, cmap=cm.coolwarm)
+ax[1, 0].plot_surface(x, y, diff_data, cmap=cm.coolwarm)
+ax[1, 1].plot_surface(x, y, diff_sqrt_data, cmap=cm.coolwarm)
+
+# %%
+fig, ax = plt.subplots(2, 2, figsize=(10, 10))
+
+ax[0, 0].imshow(data, cmap=cm.coolwarm)
+ax[0, 1].imshow(sqrt_data, cmap=cm.coolwarm)
+ax[1, 0].imshow(diff_data, cmap=cm.coolwarm)
+ax[1, 1].imshow(diff_sqrt_data, cmap=cm.coolwarm)
 
 # %%
