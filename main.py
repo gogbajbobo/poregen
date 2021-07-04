@@ -29,7 +29,7 @@ import seaborn as sns
 import helper
 
 # %%
-im_size = 32
+im_size = 128
 dim = 2
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
@@ -109,6 +109,9 @@ synt_img_2d[:, 0] = synt_img_v
 plt.imshow(synt_img_2d)
 
 # %%
+f = open('/Users/grimax/Desktop/log.txt', 'w')
+f.close()
+
 for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
     for x in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
 
@@ -127,30 +130,47 @@ for y in np.linspace(1, im_size - 1, num=im_size - 1, dtype=np.int32):
 
         if kind_h == kind_v:
             if kind_h == 'pores':
-                p_pores = p_h * p_v
-                p_solid = (1 - p_h) * (1 - p_v)
+                if np.min([p_h, p_v]) == 0:
+                    p_pores = 0
+                    p_solid = 1
+                else:
+                    p_pores = 1 if np.sqrt(p_h * p_v) > 0.5 else 0
+                    p_solid = 1 - p_pores
             else:
-                p_solid = p_h * p_v
-                p_pores = (1 - p_h) * (1 - p_v)
+                if np.min([p_h, p_v]) == 0:
+                    p_solid = 0
+                    p_pores = 1
+                else:
+                    p_solid = 1 if np.sqrt(p_h * p_v) > 0.5 else 0
+                    p_pores = 1 - p_solid
         else:
             if kind_h == 'pores':
-                p_pores = p_h * (1 - p_v)
-                p_solid = (1 - p_h) * p_v
+                p_pores = 1 if np.sqrt(p_h * (1 - p_v)) > 0.5 else 0
+                p_solid = 1 - p_pores
+#                 p_pores = p_h / (p_h + p_v)
+#                 p_solid = p_v / (p_h + p_v)
             else:
-                p_solid = p_h * (1 - p_v)
-                p_pores = (1 - p_h) * p_v
-#         p_solid = np.sqrt(p_solid)
-#         p_pores = np.sqrt(p_pores)
-        p_solid /= p_solid + p_pores
-        p_pores /= p_solid + p_pores
+                p_solid = 1 if np.sqrt(p_h * (1 - p_v)) > 0.5 else 0
+                p_pores = 1 - p_solid
+#                 p_solid = p_h / (p_h + p_v)
+#                 p_pores = p_v / (p_h + p_v)
         result = sp.stats.bernoulli.rvs(p_solid)
         synt_img_2d[y, x] = result
-#         print(last_seg_h, last_seg_v)
-#         print(p_solid, p_pores, result)
-plt.imshow(synt_img_2d)
+        
+#         f = open('/Users/grimax/Desktop/log.txt', 'a')
+#         f.write(f'x: {x}, y: {y}\n')
+#         f.write(f'last_seg_h: {last_seg_h}\n')
+#         f.write(f'p_h: {p_h}\n')
+#         f.write(f'last_seg_v: {last_seg_v}\n')
+#         f.write(f'p_v: {p_v}\n')
+#         f.write(f'p_solid: {p_solid}, p_pores: {p_pores}, result: {result}\n\n')
 
-# %%
-print(1 - np.sum(synt_img_2d)/synt_img_2d.size)
+#         f.close()
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+axes[0].imshow(synt_img_2d)
+axes[1].imshow(img_show)
+print(f'porosity: {1 - np.sum(synt_img_2d)/synt_img_2d.size}')
 
 # %%
 synt_img_segments_lengths = helper.segments_lengths_from_image(synt_img_2d)
