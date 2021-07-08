@@ -1,5 +1,7 @@
 import numpy as np
 from scipy import stats
+from scipy import ndimage
+import cv2
 
 
 def segments_from_row(row, remove_edges=False):
@@ -28,7 +30,7 @@ def segments_lengths_from_image(img):
                 true_lengths = np.append(true_lengths, len(ts))
             for fs in false_segments:
                 false_lengths = np.append(false_lengths, len(fs))
-        result[d] = {'pores': false_lengths, 'solid': true_lengths}        
+        result[d] = {'pores': np.sort(false_lengths), 'solid': np.sort(true_lengths)}        
     return result
 
 
@@ -66,3 +68,13 @@ def get_sample(kde):
 
 def image_porosity(img):
     return 1 - np.sum(img)/ img.size
+
+
+def one_D_generator(size=128, sigma=4, porosity=0.5, seed=None):
+    np.random.seed(seed)
+    image = np.random.random((size)).astype(np.float32)
+    gauss_image = ndimage.gaussian_filter(image, sigma=sigma, truncate=4)
+    img = cv2.normalize(gauss_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    img = cv2.equalizeHist(img) / 255
+    return img > porosity
+
