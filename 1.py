@@ -84,8 +84,8 @@ synt_img_v = np.array([])
 kdes_h = segments_kdes[0]
 kdes_v = segments_kdes[0]
 
-# line_length = im_size
-line_length = 10_000
+line_length = im_size
+# line_length = 10_000
 
 while len(synt_img_h) < line_length:
     segment = helper.get_sample(kdes_h['pores'])
