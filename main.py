@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -40,6 +41,7 @@ img = ~ps.generators.blobs(im_shape, porosity=0.3, blobiness=.5)
 fig, axes = plt.subplots(1, 1, figsize=(5, 5))
 img_show = img if dim == 2 else img[0, :, :] if dim == 3 else []
 axes.imshow(img_show)
+print(f'porosity: { helper.image_porosity(img) }')
 
 # %%
 segments_lengths = helper.segments_lengths_from_image(img)
@@ -82,25 +84,30 @@ synt_img_v = np.array([])
 kdes_h = segments_kdes[0]
 kdes_v = segments_kdes[0]
 
-while len(synt_img_h) < im_size:
+# line_length = im_size
+line_length = 10_000
+
+while len(synt_img_h) < line_length:
     segment = helper.get_sample(kdes_h['pores'])
     synt_img_h = np.append(synt_img_h, np.zeros(segment))
     segment = helper.get_sample(kdes_h['solid'])
     synt_img_h = np.append(synt_img_h, np.ones(segment))
 
-while len(synt_img_v) < im_size:
+while len(synt_img_v) < line_length:
     segment = helper.get_sample(kdes_v['pores'])
     synt_img_v = np.append(synt_img_v, np.zeros(segment))
     segment = helper.get_sample(kdes_v['solid'])
     synt_img_v = np.append(synt_img_v, np.ones(segment))
 
-synt_img_h = synt_img_h[:im_size]
-synt_img_v = synt_img_v[:im_size]
+synt_img_h = synt_img_h[:line_length]
+synt_img_v = synt_img_v[:line_length]
 
 fig, axes = plt.subplots(1, 2, figsize=(20, 5))
 axes[0].plot(synt_img_h)
 axes[1].plot(synt_img_v)
-# print(f'porosity: { 1 - np.sum(synt_img)/ synt_img.size}')
+
+print(f'porosity h: { 1 - np.sum(synt_img_h)/ synt_img_h.size }') # porosity tends to 0.38 @ large lengths — this is not the 0.3!
+print(f'porosity v: { 1 - np.sum(synt_img_v)/ synt_img_v.size }') # this method is incorrect
 
 # %%
 synt_img_2d = np.zeros((im_size, im_size))
