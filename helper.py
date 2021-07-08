@@ -46,7 +46,8 @@ def kde_of_lengths(segments_lengths):
     linspace = np.linspace(0, max_value, num=max_value + 1, dtype=np.int32)
 #     print(f'linspace: { linspace }')
     pdf = kde.pdf(linspace)
-#     pdf[0] = 0
+    pdf[0] = 0
+    pdf[max_value] = 0
     pdf = pdf / np.sum(pdf)
 #     print(f'pdf: { pdf }')
     cdf_values = [np.sum(pdf[:i + 1]) for i in linspace]
