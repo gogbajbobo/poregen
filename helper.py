@@ -78,3 +78,59 @@ def one_D_generator(size=128, sigma=4, porosity=0.5, seed=None):
     img = cv2.equalizeHist(img) / 255
     return img > porosity
 
+
+def compare_lengths(h1, h2):
+    print('Modes:')
+    print(stats.mode(h1['pores']))
+    print(stats.mode(h1['solid']))
+    print(stats.mode(h2['pores']))
+    print(stats.mode(h2['solid']))
+    print('\n')
+    print('Means:')
+    print(np.mean(h1['pores']))
+    print(np.mean(h1['solid']))
+    print(np.mean(h2['pores']))
+    print(np.mean(h2['solid']))
+    print('\n')
+    print('STDs:')
+    print(np.std(h1['pores']))
+    print(np.std(h1['solid']))
+    print(np.std(h2['pores']))
+    print(np.std(h2['solid']))
+    print('\n')
+    print('Medians:')
+    print(np.median(h1['pores']))
+    print(np.median(h1['solid']))
+    print(np.median(h2['pores']))
+    print(np.median(h2['solid']))
+    print('\n')
+            
+
+def compare_hists(h1, h2):
+    print('Sum diffs:')
+    p_hists_diff = np.zeros(np.max([h1['pores'].size, h2['pores'].size]))
+    p_hists_diff[:h1['pores'].size] = h1['pores']
+    p_hists_diff[:h2['pores'].size] -= h2['pores']
+
+    s_hists_diff = np.zeros(np.max([h1['solid'].size, h2['solid'].size]))
+    s_hists_diff[:h1['solid'].size] = h1['solid']
+    s_hists_diff[:h2['solid'].size] -= h2['solid']
+    
+    print(np.sum(p_hists_diff))
+    print(np.sum(s_hists_diff))
+    print('\n')
+    
+    print('CorrCoefs:')
+    p_eq_hist = np.zeros(np.max([h1['pores'].size, h2['pores'].size]))
+    t_p_eq_hist = np.zeros(np.max([h1['pores'].size, h2['pores'].size]))
+    p_eq_hist[:h1['pores'].size] = h1['pores']
+    t_p_eq_hist[:h2['pores'].size] = h2['pores']
+
+    s_eq_hist = np.zeros(np.max([h1['solid'].size, h2['solid'].size]))
+    t_s_eq_hist = np.zeros(np.max([h1['solid'].size, h2['solid'].size]))
+    s_eq_hist[:h1['solid'].size] = h1['solid']
+    t_s_eq_hist[:h2['solid'].size] = h2['solid']
+
+    print(np.corrcoef(p_eq_hist, t_p_eq_hist))
+    print(np.corrcoef(s_eq_hist, t_s_eq_hist))
+    print('\n')
