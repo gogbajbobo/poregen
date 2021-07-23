@@ -34,6 +34,25 @@ def segments_lengths_from_image(img):
     return result
 
 
+def edge_distances_from_image(img):
+    result = {}
+    for d in np.arange(img.ndim):
+        stripes = np.split(img, img.shape[d], axis=d)
+        result[d] = np.ma.zeros(img.shape)
+        for index, stripe in enumerate(stripes):
+            segments = segments_from_row(stripe.ravel())
+            edge_distances = [[idx for idx, _ in enumerate(segment)] for segment in segments]
+            # https://stackoverflow.com/questions/11264684/flatten-list-of-lists
+            edge_distances = np.ma.array([val for sublist in edge_distances for val in sublist])
+            first_segment_length = segments[0].size
+            last_segment_length = segments[-1].size
+            edge_distances[:first_segment_length] = np.ma.masked
+            edge_distances[-last_segment_length:] = np.ma.masked
+            print(edge_distances)
+            result[d][index] = edge_distances
+    return result
+
+
 def hist_of_lengths(segments_lengths):
     max_value = np.max(segments_lengths) + 1
     hist, edges = np.histogram(segments_lengths, range=(0, max_value), bins=max_value, density=True)
