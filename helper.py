@@ -39,7 +39,12 @@ def hist_of_lengths(segments_lengths):
     hist, edges = np.histogram(segments_lengths, range=(0, max_value), bins=max_value, density=True)
 #     print(f'hist: { hist }, hist sum: { np.sum(hist) }')
 #     print(f'edges: { edges }')
-    return hist, edges
+    cdf_values = [np.sum(hist[:i + 1]) for i in np.arange(0, max_value + 1)]
+    def hist_cdf(x):
+        x = 0 if x < 0 else x
+        x = max_value if x > max_value else x
+        return cdf_values[np.int32(x)]
+    return hist, edges, hist_cdf
 
 
 def kde_of_lengths(segments_lengths):
