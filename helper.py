@@ -67,7 +67,7 @@ def get_sample(kde):
 
 
 def image_porosity(img):
-    return 1 - np.sum(img)/ img.size
+    return 1 - np.sum(img) / img.size
 
 
 def one_D_generator(size=128, sigma=4, porosity=0.5, seed=None):
