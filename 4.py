@@ -32,7 +32,7 @@ import seaborn as sns
 import helper
 
 # %%
-im_size = 128
+im_size = 32
 dim = 2
 porosity = 0.3
 im_shape = np.ones(dim, dtype=np.int32) * im_size
@@ -44,6 +44,14 @@ fig, axes = plt.subplots(1, 1, figsize=(5, 5))
 img_show = img if dim == 2 else img[0, :, :] if dim == 3 else []
 axes.imshow(img_show)
 print(f'porosity: { helper.image_porosity(img) }')
+
+# %%
+edge_distances = helper.edge_distances_from_image(img)
+print(img_show)
+print(edge_distances[0])
+
+# %%
+edge_distances[0][0]
 
 # %%
 segments_lengths = helper.segments_lengths_from_image(img)
@@ -171,5 +179,11 @@ fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 axes[0].imshow(synt_img_2d)
 axes[1].imshow(img_show)
 print(f'porosity: {1 - np.sum(synt_img_2d)/synt_img_2d.size}')
+
+# %%
+x = synt_img_2d[1,].copy()
+segments = helper.segments_from_row(x)
+edge_distance = [np.array([idx for idx, _ in enumerate(segment)]) for segment in segments]
+edge_distance
 
 # %%
