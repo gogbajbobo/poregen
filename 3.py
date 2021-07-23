@@ -14,6 +14,9 @@
 # ---
 
 # %%
+# use p_remain / (p_remain + p_change) probability for generator in 1D case
+
+# %%
 # %load_ext autoreload
 # %autoreload 2
 
