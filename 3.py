@@ -124,3 +124,20 @@ plt.plot(synt_img[:128])
 print(f'synt_img porosity: {helper.image_porosity(synt_img)}')
 
 # %%
+new_segments_lengths = helper.segments_lengths_from_image(np.array([synt_img]).reshape([sample_length, 1]))[1]
+new_segments_lengths
+
+# %%
+pn_lengths = new_segments_lengths['pores']
+pn_hist, pn_edges, pn_hist_cdf = helper.hist_of_lengths(pn_lengths)
+print(f'p_hist: {p_hist}')
+print(f'pn_hist: {pn_hist}')
+print(f'p diff: {pn_hist - p_hist}')
+
+sn_lengths = new_segments_lengths['solid']
+sn_hist, sn_edges, sn_hist_cdf = helper.hist_of_lengths(sn_lengths)
+print(f's_hist: {s_hist}')
+print(f'sn_hist: {sn_hist}')
+print(f's diff: {sn_hist - s_hist}')
+
+# %%
