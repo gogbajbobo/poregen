@@ -15,6 +15,9 @@
 # ---
 
 # %%
+# use cdf probability for generator in 2D case
+
+# %%
 # %load_ext autoreload
 # %autoreload 2
 
