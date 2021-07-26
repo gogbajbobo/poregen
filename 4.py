@@ -21,6 +21,8 @@
 # %autoreload 2
 
 # %%
+import copy as cp
+
 import porespy as ps
 import numpy as np
 import scipy as sp
@@ -46,12 +48,48 @@ axes.imshow(img_show)
 print(f'porosity: { helper.image_porosity(img) }')
 
 # %%
-edge_distances = helper.edge_distances_from_image(img)
-print(img_show)
-print(edge_distances[0])
+image_statistics = helper.image_statistics(img)
+edge_distances = image_statistics['edge_distances']
+segments_lengths = image_statistics['segments_lengths']
+print(np.int32(img_show[0]))
+print(np.int32(edge_distances[0][0]))
+print(segment_lengths[0])
 
 # %%
-edge_distances[0][0]
+im = np.copy(img_show[0])
+ed = np.ma.copy(edge_distances[0][0])
+sl = cp.deepcopy(segment_lengths[0])
+pores_mask = np.ma.mask_or(ed.mask, im)
+solid_mask = np.ma.mask_or(ed.mask, ~im)
+ed_pores = ed.copy()
+ed_pores.mask = pores_mask
+ed_solid = ed.copy()
+ed_solid.mask = solid_mask
+print(ed_pores)
+print(ed_solid)
+
+# %%
+print(sl['pores'])
+helper.hist_of_lengths(sl['pores'], density=False)
+
+# %%
+im = np.copy(img_show)
+ed = np.ma.copy(edge_distances[0])
+
+pores_mask = np.ma.mask_or(ed.mask, im)
+solid_mask = np.ma.mask_or(ed.mask, ~im)
+ed_pores = ed.copy()
+ed_pores.mask = pores_mask
+ed_solid = ed.copy()
+ed_solid.mask = solid_mask
+
+# for edp in ed_pores:
+#     print(np.int32(edp))
+
+max_value = np.max(ed_pores) + 1
+hist, edges = np.histogram(ed_pores.compressed(), range=(0, max_value), bins=max_value)
+hist
+
 
 # %%
 segments_lengths = helper.segments_lengths_from_image(img)
