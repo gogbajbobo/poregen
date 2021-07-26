@@ -16,6 +16,43 @@ def segments_from_row(row, remove_edges=False):
     return segments
 
 
+def image_statistics(img):
+    result = { 'segments_lengths': {}, 'edge_distances': {} }
+    edge_distances_result = {}
+    for d in np.arange(img.ndim):
+        
+        solid_lengths = np.array([], dtype=np.int32)
+        pores_lengths = np.array([], dtype=np.int32)
+        
+        edge_distances_result[d] = np.ma.masked_all(img.shape, dtype=np.int32)
+        
+        stripes = np.split(img, img.shape[d], axis=d)
+        for index, stripe in enumerate(stripes):
+            
+            segments = segments_from_row(stripe.ravel())
+            
+            edge_distances = [[idx for idx, _ in enumerate(segment)] for segment in segments]
+            # https://stackoverflow.com/questions/11264684/flatten-list-of-lists
+            edge_distances = np.ma.array([val for sublist in edge_distances for val in sublist])
+            first_segment_length = segments[0].size
+            last_segment_length = segments[-1].size
+            edge_distances[:first_segment_length] = np.ma.masked
+            edge_distances[-last_segment_length:] = np.ma.masked
+            edge_distances_result[d][index] = edge_distances
+            
+            segments = segments[1:-1]
+            true_segments = filter(lambda x: True in x, segments)
+            false_segments = filter(lambda x: False in x, segments)
+            for ts in true_segments:
+                solid_lengths = np.append(solid_lengths, len(ts))
+            for fs in false_segments:
+                pores_lengths = np.append(pores_lengths, len(fs))
+                
+        result['segments_lengths'][d] = {'pores': np.sort(pores_lengths), 'solid': np.sort(solid_lengths)}
+    result['edge_distances'] = edge_distances_result
+    return result
+
+
 def segments_lengths_from_image(img):
     result = {}
     for d in np.arange(img.ndim):
@@ -48,14 +85,13 @@ def edge_distances_from_image(img):
             last_segment_length = segments[-1].size
             edge_distances[:first_segment_length] = np.ma.masked
             edge_distances[-last_segment_length:] = np.ma.masked
-            print(edge_distances)
             result[d][index] = edge_distances
     return result
 
 
-def hist_of_lengths(segments_lengths):
+def hist_of_lengths(segments_lengths, density=True):
     max_value = np.max(segments_lengths) + 1
-    hist, edges = np.histogram(segments_lengths, range=(0, max_value), bins=max_value, density=True)
+    hist, edges = np.histogram(segments_lengths, range=(0, max_value), bins=max_value, density=density)
 #     print(f'hist: { hist }, hist sum: { np.sum(hist) }')
 #     print(f'edges: { edges }')
     cdf_values = [np.sum(hist[:i + 1]) for i in np.arange(0, max_value + 1)]
