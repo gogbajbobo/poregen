@@ -14,7 +14,7 @@
 # ---
 
 # %%
-# test 2D array manipulation
+# test 2D/3D array manipulation
 
 # %%
 # %load_ext autoreload
@@ -107,5 +107,26 @@ x_y = np.ma.array(x_y, mask=x_y_mask)
 
 print(f'data: {(x_y.data == xy.data).all()}')
 print(f'mask: {(x_y.mask == xy.mask).all()}')
+
+# %%
+x3d = np.array([
+    [
+        [1, 0, 1],
+        [1, 0, 1],
+        [1, 0, 1],
+    ], [
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+    ], [
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+    ]
+])
+
+# %%
+print(x3d[0, :, :])
+print(np.rot90(x3d, axes=(2, 0))[0, :, :])
 
 # %%
