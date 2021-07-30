@@ -21,6 +21,8 @@
 # %autoreload 2
 
 # %%
+import copy as cp
+
 import porespy as ps
 import numpy as np
 import scipy as sp
@@ -51,12 +53,12 @@ edge_distances = image_statistics['edge_distances']
 segments_lengths = image_statistics['segments_lengths']
 print(np.int32(img_show[0]))
 print(np.int32(edge_distances[0][0]))
-print(segment_lengths[0])
+print(segments_lengths[0])
 
 # %%
 im = np.copy(img_show[0])
 ed = np.ma.copy(edge_distances[0][0])
-sl = cp.deepcopy(segment_lengths[0])
+sl = cp.deepcopy(segments_lengths[0])
 pores_mask = np.ma.mask_or(ed.mask, im)
 solid_mask = np.ma.mask_or(ed.mask, ~im)
 ed_pores = ed.copy()
