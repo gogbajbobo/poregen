@@ -16,7 +16,7 @@ def segments_from_row(row, remove_edges=False):
     return segments
 
 
-def image_statistics(img):
+def image_statistics(img, remove_edges=False):
     result = { 'segments_lengths': {}, 'edge_distances': {} }
     edge_distances_result = {}
     for d in np.arange(img.ndim):
@@ -29,7 +29,7 @@ def image_statistics(img):
         stripes = np.split(img, img.shape[d], axis=d)
         for index, stripe in enumerate(stripes):
             
-            segments = segments_from_row(stripe.ravel())
+            segments = segments_from_row(stripe.ravel(), remove_edges=remove_edges)
             
             edge_distances = [[idx for idx, _ in enumerate(segment)] for segment in segments]
             # https://stackoverflow.com/questions/11264684/flatten-list-of-lists
@@ -40,7 +40,8 @@ def image_statistics(img):
             edge_distances[-last_segment_length:] = np.ma.masked
             edge_distances_result[d][index] = edge_distances
             
-            segments = segments[1:-1]
+            if remove_edges:
+                segments = segments[1:-1]
             true_segments = filter(lambda x: True in x, segments)
             false_segments = filter(lambda x: False in x, segments)
             for ts in true_segments:
