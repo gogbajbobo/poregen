@@ -30,12 +30,12 @@ import matplotlib.pyplot as plt
 import helper
 
 # %%
-im_size = 8
+im_size = 32
 dim = 2
 porosity = 0.5
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
-img = ~ps.generators.blobs(im_shape, porosity=porosity, blobiness=.5)
+img = ~ps.generators.blobs(im_shape, porosity=porosity, blobiness=1)
 
 # %%
 fig, axes = plt.subplots(1, 1, figsize=(5, 5))
@@ -63,7 +63,7 @@ y_data = y.T.data.ravel()
 eds_shape = (*img.shape, dim)
 eds = np.column_stack((y_data, x_data)).reshape(eds_shape)
 
-print(np.int32(img))
+# print(np.int32(img))
 # print(eds[:, :, 0])
 # print(eds[:, :, 1])
 
@@ -77,7 +77,7 @@ els_x[-1, :] = -1
 els_x = np.roll(els_x, 1) + 1
 els_x[mask_x] = 0
 els_x = els_x[1:, 1:]
-els_x
+# els_x
 
 # %%
 els_y = np.pad(edge_distances[1], 1)
@@ -89,7 +89,7 @@ els_y[-1, :] = -1
 els_y = np.roll(els_y, 1) + 1
 els_y[mask_y] = 0
 els_y = els_y.T[1:, 1:]
-els_y
+# els_y
 
 # %%
 els_shape = (*tuple(i + 1 for i in img.shape), dim)
@@ -97,15 +97,44 @@ els = np.column_stack((els_y.ravel(), els_x.ravel())).reshape(els_shape)
 # els
 
 # %%
-fig, axes = plt.subplots(1, 1, figsize=(15, 15))
-im = np.pad(np.float32(img_show), 1, constant_values=.5)[1:, 1:]
-axes.imshow(im)
+if im_size < 32:
+    fig, axes = plt.subplots(1, 1, figsize=(15, 15))
+    im = np.pad(np.float32(img_show), 1, constant_values=.5)[1:, 1:]
+    axes.imshow(im)
 
-for i in range(im.shape[0]):
-    for j in range(im.shape[1]):
-        color = 'black' if im[i, j] else 'w'
-        if i < eds.shape[0] and j < eds.shape[1]:
-            axes.text(j, i, eds[i, j], ha='right', va='bottom', c=color, size='x-large')
-        axes.text(j, i, els[i, j], ha='left', va='top', c=color, size='xx-large')
+    eds_text_size = 'x-large' if im_size < 16 else 'small'
+    els_text_size = 'xx-large' if im_size < 16 else 'medium'
+
+    for i in range(im.shape[0]):
+        for j in range(im.shape[1]):
+            color = 'black' if im[i, j] else 'w'
+            if i < eds.shape[0] and j < eds.shape[1]:
+                axes.text(j, i, eds[i, j], ha='right', va='bottom', c=color, size=eds_text_size)
+            axes.text(j, i, els[i, j], ha='left', va='top', c=color, size=els_text_size)
+
+# %%
+eds_s = eds[img_show == 1]
+eds_v = eds[img_show == 0]
+
+eds_s_hist, eds_v_hist = helper.calc_2d_hists(eds_s, eds_v)
+
+# %%
+s_mask = img_show == 1
+v_mask = img_show == 0
+
+s_mask = np.pad(s_mask, 1, mode='symmetric')[1:, 1:]
+s_mask[-1, :] = ~s_mask[-1, :]
+s_mask[:, -1] = ~s_mask[:, -1]
+s_mask = ~s_mask
+
+v_mask = np.pad(v_mask, 1, mode='symmetric')[1:, 1:]
+v_mask[-1, :] = ~v_mask[-1, :]
+v_mask[:, -1] = ~v_mask[:, -1]
+v_mask = ~v_mask
+
+els_s = els[s_mask]
+els_v = els[v_mask]
+
+els_s_hist, els_v_hist = helper.calc_2d_hists(els_s, els_v, drop_zero=True)
 
 # %%
