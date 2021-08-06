@@ -3,6 +3,9 @@ from scipy import stats
 from scipy import ndimage
 import cv2
 
+import matplotlib.pyplot as plt
+from matplotlib import colors
+
 
 def segments_from_row(row, remove_edges=False):
     borders = row[1:] != row[:-1]
@@ -195,3 +198,47 @@ def compare_hists(h1, h2):
     print(np.corrcoef(p_eq_hist, t_p_eq_hist))
     print(np.corrcoef(s_eq_hist, t_s_eq_hist))
     print('\n')
+
+    
+def calc_2d_hists(solid_data, void_data, show=True, drop_zero=False):
+
+    s_y = solid_data[:, 0]
+    s_x = solid_data[:, 1]
+    max_s_y = np.max(s_y) + 1
+    max_s_x = np.max(s_x) + 1
+    s_hist, _, _ = np.histogram2d(s_y, s_x, bins=(max_s_y, max_s_x), range=[[0, max_s_y], [0, max_s_x]])
+    s_hist = np.int32(s_hist)
+    if drop_zero:
+        s_hist[0, 0] = 0
+    # print(s_hist)
+    
+    v_y = void_data[:, 0]
+    v_x = void_data[:, 1]
+    max_v_y = np.max(v_y) + 1
+    max_v_x = np.max(v_x) + 1
+    v_hist, _, _ = np.histogram2d(v_y, v_x, bins=(max_v_y, max_v_x), range=[[0, max_v_y], [0, max_v_x]])
+    v_hist = np.int32(v_hist)
+    if drop_zero:
+        v_hist[0, 0] = 0
+    # print(v_hist)
+
+    if show:
+        fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+        im0 = axes[0].imshow(s_hist, norm=colors.LogNorm())
+        axes[1].imshow(v_hist, norm=colors.LogNorm())
+        middle_s = (np.max(s_hist) - 1) / 2
+        middle_v = (np.max(v_hist) - 1) / 2
+
+        if np.max((*s_hist.shape, *v_hist.shape)) < 20:
+        
+            for i in range(s_hist.shape[0]):
+                for j in range(s_hist.shape[1]):
+                    color = 'black' if s_hist[i, j] > middle_s else 'w'
+                    axes[0].text(j, i, s_hist[i, j], ha='center', va='center', c=color, size='xx-large')
+
+            for i in range(v_hist.shape[0]):
+                for j in range(v_hist.shape[1]):
+                    color = 'black' if v_hist[i, j] > middle_v else 'w'
+                    axes[1].text(j, i, v_hist[i, j], ha='center', va='center', c=color, size='xx-large')
+        
+    return s_hist, v_hist
