@@ -4,6 +4,7 @@ porespy==2.0.2
 scipy==1.7.1
 jupyterlab==3.1.4
 jupytext==1.11.4
+jupyterlab_execute_time==2.0.5
 seaborn==0.11.1
 xeus-python==0.12.5
 opencv-python==4.5.3.56
