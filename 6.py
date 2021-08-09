@@ -31,13 +31,13 @@ from matplotlib import colors
 
 import helper
 
-# %%
+# %% tags=[]
 import seaborn as sns
 sns.set_theme()
-sns.set_style("whitegrid")
+sns.set_style("white")
 
 # %% tags=[]
-im_size = 256
+im_size = 32
 dim = 2
 porosity = 0.5
 im_shape = np.ones(dim, dtype=np.int32) * im_size
@@ -89,7 +89,7 @@ for y in y_grid:
             if not is_masked:
                 rigth_length = eds_y.data[prev_y, x]
                 rigth_is_solid = bool(img[prev_y, x])
-                
+
         df.loc[(y, x)] = pd.Series({
             'isSolid': is_solid, 
             'leftLength': left_length, 
@@ -98,8 +98,12 @@ for y in y_grid:
             'topIsSolid': rigth_is_solid,
         })
 
-dff = df[df.notna().all(axis='columns')]
+print(df.info())
 print(df.shape)
+        
+dff = df[df.notna().all(axis='columns')].astype(np.int32)
+
+print(dff.info())
 print(dff.shape)
 
 # %% tags=[]
@@ -128,5 +132,49 @@ sns.histplot(dff2, x='leftLength', y='topLength', bins=(dff2['leftLength'].max()
 g = sns.PairGrid(dff, vars=['leftLength', 'topLength'])
 g.map_diag(sns.histplot)
 g.map_offdiag(sns.scatterplot)
+
+# %% tags=[]
+import statsmodels.api as sm
+
+# %% tags=[]
+X = dff[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
+Y = dff[['isSolid']]
+x_train = X[:500]
+y_train = Y[:500]
+x_test = X[500:]
+y_test = Y[500:]
+log_reg = sm.Logit(y_train, x_train).fit()
+print(log_reg.summary())
+predicted_train = log_reg.predict(x_train) > .5
+predicted_test = log_reg.predict(x_test) > .5
+print(f'train score: {(predicted_train.to_numpy().ravel() == y_train.to_numpy().ravel()).mean()}')
+print(f'test score: {(predicted_test.to_numpy().ravel() == y_test.to_numpy().ravel()).mean()}')
+
+# %% tags=[]
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import plot_confusion_matrix
+
+# %% tags=[]
+skl_log_reg = LogisticRegression(fit_intercept = False, penalty='none')
+X_train = x_train
+Y_train = y_train.to_numpy().ravel()
+X_test = x_test
+Y_test = y_test.to_numpy().ravel()
+skl_log_reg.fit(X_train, Y_train)
+print(skl_log_reg.coef_)
+print(f'train: {skl_log_reg.score(X_train, Y_train)}')
+print(f'test: {skl_log_reg.score(X_test, Y_test)}')
+plot_confusion_matrix(skl_log_reg, X_test, Y_test)
+
+# %% tags=[]
+parameters = {'C': [.0001, .001, .01, .1, 1, 10], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
+Logistic = LogisticRegression()
+grid_search_CV = GridSearchCV(Logistic, parameters)
+grid_search_CV.fit(X_train, Y_train)
+print(f'best estimator: {grid_search_CV.best_estimator_}')
+print(f'best score: {grid_search_CV.best_score_}')
+print(f'train accuracy: {grid_search_CV.best_estimator_.score(X_train, Y_train)}')
+print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
 
 # %%
