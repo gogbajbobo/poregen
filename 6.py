@@ -182,6 +182,9 @@ print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
 plot_confusion_matrix(grid_search_CV.best_estimator_, X_test, Y_test)
 
 # %% tags=[]
+f = open('/Users/grimax/Desktop/log.txt', 'w')
+f.close()
+
 new_img = np.empty(im_shape, dtype=np.int32)
 new_img_eds = np.empty((*im_shape, 2), dtype=np.int32)
 
@@ -231,19 +234,34 @@ for y in y_grid[1:]:
         leftIsSolid = new_img[y, x - 1]
         topLength = new_img_eds[y - 1, x][0]
         topIsSolid = new_img[y - 1, x]
-        prediction = grid_search_CV.best_estimator_.predict([[leftLength, leftIsSolid, topLength, topIsSolid]])
+        prediction = grid_search_CV.best_estimator_.predict_proba([[leftLength, leftIsSolid, topLength, topIsSolid]])[0][1]
         result = calc_result(prediction)
         new_img_eds[y, x] = np.array([
             topLength + 1 if result == topIsSolid else 1, 
             leftLength + 1 if result == leftIsSolid else 1
         ])
         new_img[y, x] = result
+        f = open('/Users/grimax/Desktop/log.txt', 'a')
+        f.write(f'y: {y}, x: {x}\n')
+        f.write(f'leftLength: {leftLength}\n')
+        f.write(f'leftIsSolid: {leftIsSolid}\n')
+        f.write(f'topLength: {topLength}\n')
+        f.write(f'topIsSolid: {topIsSolid}\n')
+        f.write(f'prediction: {prediction}\n')
+        f.write(f'new_img_eds value: {new_img_eds[y, x]}\n')
+        f.write(f'result: {result}\n')
+        f.write(f'\n')
+
+        f.close()
 
 new_img.shape
 
 # %% tags=[]
-fig, axes = plt.subplots(1, 1, figsize=(10, 10))
+fig, axes = plt.subplots(1, 1, figsize=(15, 15))
 axes.imshow(new_img[:, :])
 print(f'porosity: { helper.image_porosity(new_img) }')
+
+# %% tags=[]
+plt.plot([grid_search_CV.best_estimator_.predict_proba([[i, 0, i, 1]])[0] for i in np.arange(200)])
 
 # %%
