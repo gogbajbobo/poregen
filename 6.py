@@ -20,10 +20,11 @@
 # %load_ext autoreload
 # %autoreload 2
 
-# %%
+# %% tags=[]
 import porespy as ps
 import numpy as np
 import pandas as pd
+import scipy as sp
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -37,12 +38,13 @@ sns.set_theme()
 sns.set_style("white")
 
 # %% tags=[]
-im_size = 512
+im_size = 128
 dim = 2
-porosity = 0.5
+porosity = 0.3
+blobiness = 1
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 np.random.seed(0)
-img = ~ps.generators.blobs(im_shape, porosity=porosity, blobiness=1)
+img = ~ps.generators.blobs(im_shape, porosity=porosity, blobiness=blobiness)
 
 # %% tags=[]
 fig, axes = plt.subplots(1, 1, figsize=(5, 5))
@@ -107,31 +109,31 @@ print(dff.info())
 print(dff.shape)
 
 # %% tags=[]
-dff.head()
+# dff.head()
 
 # %% tags=[]
-fig, axes = plt.subplots(1, 1, figsize=(10, 10))
-sns.histplot(dff, x='leftLength', y='topLength', bins=(dff['leftLength'].max(), dff['topLength'].max()))
+# fig, axes = plt.subplots(1, 1, figsize=(10, 10))
+# sns.histplot(dff, x='leftLength', y='topLength', bins=(dff['leftLength'].max(), dff['topLength'].max()))
 
 # %% tags=[]
-dff1 = dff[(dff['isSolid'] == dff['leftIsSolid']) & (dff['isSolid'] == dff['topIsSolid'])]
-print(dff1.shape)
-dff1.head()
+# dff1 = dff[(dff['isSolid'] == dff['leftIsSolid']) & (dff['isSolid'] == dff['topIsSolid'])]
+# print(dff1.shape)
+# dff1.head()
 
 # %% tags=[]
-dff2 = dff[dff['leftIsSolid'] != dff['topIsSolid']]
-print(dff2.shape)
-dff2.head()
+# dff2 = dff[dff['leftIsSolid'] != dff['topIsSolid']]
+# print(dff2.shape)
+# dff2.head()
 
 # %% tags=[]
-fig, axes = plt.subplots(1, 2, figsize=(20, 10))
-sns.histplot(dff1, x='leftLength', y='topLength', bins=(dff1['leftLength'].max(), dff1['topLength'].max()), ax=axes[0])
-sns.histplot(dff2, x='leftLength', y='topLength', bins=(dff2['leftLength'].max(), dff2['topLength'].max()), ax=axes[1])
+# fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+# sns.histplot(dff1, x='leftLength', y='topLength', bins=(dff1['leftLength'].max(), dff1['topLength'].max()), ax=axes[0])
+# sns.histplot(dff2, x='leftLength', y='topLength', bins=(dff2['leftLength'].max(), dff2['topLength'].max()), ax=axes[1])
 
 # %% tags=[]
-g = sns.PairGrid(dff, vars=['leftLength', 'topLength'])
-g.map_diag(sns.histplot)
-g.map_offdiag(sns.scatterplot)
+# g = sns.PairGrid(dff, vars=['leftLength', 'topLength'])
+# g.map_diag(sns.histplot)
+# g.map_offdiag(sns.scatterplot)
 
 # %% tags=[]
 import statsmodels.api as sm
@@ -178,5 +180,70 @@ print(f'best score: {grid_search_CV.best_score_}')
 print(f'train accuracy: {grid_search_CV.best_estimator_.score(X_train, Y_train)}')
 print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
 plot_confusion_matrix(grid_search_CV.best_estimator_, X_test, Y_test)
+
+# %% tags=[]
+new_img = np.empty(im_shape, dtype=np.int32)
+new_img_eds = np.empty((*im_shape, 2), dtype=np.int32)
+
+segments_lengths = image_statistics['segments_lengths']
+
+synt_line_h = np.array([])
+synt_line_v = np.array([])
+
+while len(synt_line_h) < im_shape[-1]:
+    segment = np.random.choice(segments_lengths[0]['solid'])
+    synt_line_h = np.append(synt_line_h, np.ones(segment))
+    segment = np.random.choice(segments_lengths[0]['pores'])
+    synt_line_h = np.append(synt_line_h, np.zeros(segment))
+
+while len(synt_line_v) < im_shape[-2]:
+    segment = np.random.choice(segments_lengths[1]['solid'])
+    synt_line_v = np.append(synt_line_v, np.ones(segment))
+    segment = np.random.choice(segments_lengths[1]['pores'])
+    synt_line_v = np.append(synt_line_v, np.zeros(segment))
+
+synt_line_h = synt_line_h[:im_shape[-1]]
+synt_line_v = synt_line_v[:im_shape[-2]]
+
+# print(synt_line_h)
+# print(synt_line_v)
+
+new_img[0, :] = synt_line_h
+new_img[:, 0] = synt_line_v
+
+# print(new_img[0, :])
+# print(new_img[:, 0])
+
+new_img_eds[0, :] = np.array([1, 0])
+new_img_eds[:, 0] = np.array([0, 1])
+new_img_eds[0, 0] = np.array([0, 0])
+
+# print(new_img_eds[0, :])
+# print(new_img_eds[:, 0])
+
+def calc_result(prediction):
+#     return np.int32(prediction > .5)
+    return sp.stats.bernoulli.rvs(prediction)
+
+for y in y_grid[1:]:
+    for x in x_grid[1:]:
+        leftLength = new_img_eds[y, x - 1][1]
+        leftIsSolid = new_img[y, x - 1]
+        topLength = new_img_eds[y - 1, x][0]
+        topIsSolid = new_img[y - 1, x]
+        prediction = grid_search_CV.best_estimator_.predict([[leftLength, leftIsSolid, topLength, topIsSolid]])
+        result = calc_result(prediction)
+        new_img_eds[y, x] = np.array([
+            topLength + 1 if result == topIsSolid else 1, 
+            leftLength + 1 if result == leftIsSolid else 1
+        ])
+        new_img[y, x] = result
+
+new_img.shape
+
+# %% tags=[]
+fig, axes = plt.subplots(1, 1, figsize=(10, 10))
+axes.imshow(new_img[:, :])
+print(f'porosity: { helper.image_porosity(new_img) }')
 
 # %%
