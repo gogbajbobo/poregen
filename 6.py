@@ -37,7 +37,7 @@ sns.set_theme()
 sns.set_style("white")
 
 # %% tags=[]
-im_size = 32
+im_size = 512
 dim = 2
 porosity = 0.5
 im_shape = np.ones(dim, dtype=np.int32) * im_size
@@ -168,13 +168,15 @@ print(f'test: {skl_log_reg.score(X_test, Y_test)}')
 plot_confusion_matrix(skl_log_reg, X_test, Y_test)
 
 # %% tags=[]
-parameters = {'C': [.0001, .001, .01, .1, 1, 10], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
-Logistic = LogisticRegression()
+parameters = {'C': [.0001, .001, .01, .1, 1, 10, 100], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
+Logistic = LogisticRegression(max_iter=10000)
 grid_search_CV = GridSearchCV(Logistic, parameters)
 grid_search_CV.fit(X_train, Y_train)
 print(f'best estimator: {grid_search_CV.best_estimator_}')
+print(f'best estimator coefs: {grid_search_CV.best_estimator_.coef_}')
 print(f'best score: {grid_search_CV.best_score_}')
 print(f'train accuracy: {grid_search_CV.best_estimator_.score(X_train, Y_train)}')
 print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
+plot_confusion_matrix(grid_search_CV.best_estimator_, X_test, Y_test)
 
 # %%
