@@ -307,8 +307,10 @@ def dataframe_from_image(img):
     
     im_stats = image_statistics(img)
     edge_distances = im_stats['edge_distances']
-    eds_y = (np.int32(edge_distances[1]) + 1).T
-    eds_x = np.int32(edge_distances[0]) + 1
+    eds_y = np.int32(edge_distances[1]).T
+    eds_y = eds_y.data + 1
+    eds_x = np.int32(edge_distances[0])
+    eds_x = eds_x.data + 1
 
     y_size = img.shape[-2]
     x_size = img.shape[-1]
