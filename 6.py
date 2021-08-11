@@ -87,14 +87,16 @@ print(f'test: {skl_log_reg.score(X_test, Y_test)}')
 plot_confusion_matrix(skl_log_reg, X_test, Y_test)
 
 # %% tags=[]
-y = [y for y, x in Y[Y.isSolid != skl_log_reg.predict(X)].index]
-x = [x for y, x in Y[Y.isSolid != skl_log_reg.predict(X)].index]
+predict_image = skl_log_reg.predict(X)
+y = [y for y, x in Y[Y.isSolid != predict_image].index]
+x = [x for y, x in Y[Y.isSolid != predict_image].index]
 
-fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 img_show = img if dim == 2 else img[0, :, :] if dim == 3 else []
 axes[0].imshow(img_show)
-axes[1].imshow(img_show)
-axes[1].scatter(x, y, color='red', marker='.')
+axes[1].imshow(predict_image.reshape(img.shape))
+axes[2].imshow(img_show)
+axes[2].scatter(x, y, color='red', marker='.')
 
 # %% tags=[]
 np.random.seed(1)
@@ -109,17 +111,85 @@ df_test = helper.dataframe_from_image(img_test)
 df_test.head()
 
 # %% tags=[]
+predict_image = skl_log_reg.predict(XX)
 XX = df_test[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
 YY = df_test[['isSolid']]
 
-y = [y for y, x in YY[YY.isSolid != skl_log_reg.predict(XX)].index]
-x = [x for y, x in YY[YY.isSolid != skl_log_reg.predict(XX)].index]
+y = [y for y, x in YY[YY.isSolid != predict_image].index]
+x = [x for y, x in YY[YY.isSolid != predict_image].index]
 
-fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 img_test_show = img_test if dim == 2 else img_test[0, :, :] if dim == 3 else []
 axes[0].imshow(img_test_show)
-axes[1].imshow(img_test_show)
-axes[1].scatter(x, y, color='red', marker='.')
+axes[1].imshow(predict_image.reshape(img_test.shape))
+axes[2].imshow(img_test_show)
+axes[2].scatter(x, y, color='red', marker='.')
+
+# %% tags=[]
+plot_confusion_matrix(skl_log_reg, XX, YY)
+
+# %% tags=[]
+f = open('/Users/grimax/Desktop/log.txt', 'w')
+f.close()
+
+y_size = img.shape[-2]
+x_size = img.shape[-1]
+y_grid = np.arange(y_size)
+x_grid = np.arange(x_size)
+
+new_img = np.empty(im_shape, dtype=np.int32)
+new_img_eds = np.empty((*im_shape, 2), dtype=np.int32)
+
+for y in y_grid:
+    for x in x_grid:
+
+        topLength = 0
+        topIsSolid = -1
+        leftLength = 0
+        leftIsSolid = -1
+
+        if y == 0 and x == 0:
+            new_img_eds[y, x] = np.array([0, 0])
+        elif y == 0:
+            leftLength = new_img_eds[y, x - 1][-1]
+            leftIsSolid = new_img[y, x - 1]
+            new_img_eds[y, x] = np.array([0, leftLength + 1])
+        elif x == 0:
+            topLength = new_img_eds[y - 1, x][-2]
+            topIsSolid = new_img[y - 1, x]
+            new_img_eds[y, x] = np.array([topLength + 1, 0])
+        else:
+            topLength = new_img_eds[y - 1, x][-2]
+            topIsSolid = new_img[y - 1, x]
+            leftLength = new_img_eds[y, x - 1][-1]
+            leftIsSolid = new_img[y, x - 1]
+            new_img_eds[y, x] = np.array([topLength + 1, leftLength + 1])
+            
+        prediction = skl_log_reg.predict([[leftLength, leftIsSolid, topLength, topIsSolid]])[0]
+        new_img[y, x] = prediction
+        
+        f = open('/Users/grimax/Desktop/log.txt', 'a')
+        f.write(f'y: {y}, x: {x}\n')
+        f.write(f'leftLength: {leftLength}\n')
+        f.write(f'leftIsSolid: {leftIsSolid}\n')
+        f.write(f'topLength: {topLength}\n')
+        f.write(f'topIsSolid: {topIsSolid}\n')
+        f.write(f'prediction: {prediction}\n')
+        f.write(f'new_img_eds value: {new_img_eds[y, x]}\n')
+        f.write(f'\n')
+        f.close()
+
+new_img.shape
+
+# %% tags=[]
+fig, axes = plt.subplots(1, 1, figsize=(10, 10))
+new_img_show = new_img if dim == 2 else img_test[0, :, :] if dim == 3 else []
+axes.imshow(new_img_show)
+
+# %% tags=[]
+print(XX[:10])
+print(skl_log_reg.predict(XX[8:9]))
+print(skl_log_reg.predict([[9, 0, 0, -1]]))
 
 # %% tags=[]
 parameters = {'C': [.0001, .001, .01, .1, 1, 10, 100], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
