@@ -64,8 +64,12 @@ df = helper.dataframe_from_image(img)
 df.head()
 
 # %% tags=[]
-X = df[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
-Y = df[['isSolid']]
+dff = df[(df.isSolid != df.leftIsSolid) | (df.isSolid != df.topIsSolid)]
+dff
+
+# %% tags=[]
+X = dff[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
+Y = dff[['isSolid']]
 x_train, x_test, y_train, y_test = train_test_split(X, Y)
 log_reg = sm.Logit(y_train, x_train).fit()
 print(log_reg.summary())
@@ -87,6 +91,12 @@ print(f'test: {skl_log_reg.score(X_test, Y_test)}')
 plot_confusion_matrix(skl_log_reg, X_test, Y_test)
 
 # %% tags=[]
+X = df[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
+Y = df[['isSolid']]
+print(f'test: {skl_log_reg.score(X, Y)}')
+plot_confusion_matrix(skl_log_reg, X, Y)
+
+# %% tags=[]
 predict_image = skl_log_reg.predict(X)
 y = [y for y, x in Y[Y.isSolid != predict_image].index]
 x = [x for y, x in Y[Y.isSolid != predict_image].index]
@@ -97,6 +107,18 @@ axes[0].imshow(img_show)
 axes[1].imshow(predict_image.reshape(img.shape))
 axes[2].imshow(img_show)
 axes[2].scatter(x, y, color='red', marker='.')
+
+# %%
+parameters = {'C': [.0001, .001, .01, .1, 1, 10, 100], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
+Logistic = LogisticRegression(max_iter=10000)
+grid_search_CV = GridSearchCV(Logistic, parameters)
+grid_search_CV.fit(X_train, Y_train)
+print(f'best estimator: {grid_search_CV.best_estimator_}')
+print(f'best estimator coefs: {grid_search_CV.best_estimator_.coef_}')
+print(f'best score: {grid_search_CV.best_score_}')
+print(f'train accuracy: {grid_search_CV.best_estimator_.score(X_train, Y_train)}')
+print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
+plot_confusion_matrix(grid_search_CV.best_estimator_, X_test, Y_test)
 
 # %% tags=[]
 np.random.seed(1)
