@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import stats
 from scipy import ndimage
+import pandas as pd
+
 import cv2
 
 import matplotlib.pyplot as plt
@@ -242,3 +244,110 @@ def calc_2d_hists(solid_data, void_data, show=True, drop_zero=False):
                     axes[1].text(j, i, v_hist[i, j], ha='center', va='center', c=color, size='xx-large')
         
     return s_hist, v_hist
+
+
+def dataframes_from_image_with_nan_at_edges(img):
+    
+    im_stats = image_statistics(img)
+    edge_distances = im_stats['edge_distances']
+    eds_y = (np.int32(edge_distances[1]) + 1).T
+    eds_x = np.int32(edge_distances[0]) + 1
+
+    y_size = img.shape[-2]
+    x_size = img.shape[-1]
+    y_grid = np.arange(y_size)
+    x_grid = np.arange(x_size)
+    indices = pd.MultiIndex.from_tuples(list(np.ndindex(y_size, x_size)))
+
+    df = pd.DataFrame(columns=['isSolid', 'leftLength', 'leftIsSolid', 'topLength', 'topIsSolid'], index=indices)
+
+    for y in y_grid:
+        for x in x_grid:
+
+            is_solid = bool(img[y, x])
+            left_length = np.NaN
+            left_is_solid = np.NaN
+            rigth_length = np.NaN
+            rigth_is_solid = np.NaN
+
+            if x > 0:
+                prev_x = x - 1
+                is_masked = eds_x.mask[y, prev_x]
+                if not is_masked:
+                    left_length = eds_x.data[y, prev_x]
+                    left_is_solid = bool(img[y, prev_x])
+
+            if y > 0:
+                prev_y = y - 1
+                is_masked = eds_y.mask[prev_y, x]
+                if not is_masked:
+                    rigth_length = eds_y.data[prev_y, x]
+                    rigth_is_solid = bool(img[prev_y, x])
+
+            df.loc[(y, x)] = pd.Series({
+                'isSolid': is_solid, 
+                'leftLength': left_length, 
+                'leftIsSolid': left_is_solid, 
+                'topLength': rigth_length, 
+                'topIsSolid': rigth_is_solid,
+            })
+
+    print(df.info())
+    print(df.shape)
+
+    dff = df[df.notna().all(axis='columns')].astype(np.int32)
+
+    print(dff.info())
+    print(dff.shape)
+    
+    return df, dff
+
+
+def dataframe_from_image(img):
+    
+    im_stats = image_statistics(img)
+    edge_distances = im_stats['edge_distances']
+    eds_y = (np.int32(edge_distances[1]) + 1).T
+    eds_x = np.int32(edge_distances[0]) + 1
+
+    y_size = img.shape[-2]
+    x_size = img.shape[-1]
+    y_grid = np.arange(y_size)
+    x_grid = np.arange(x_size)
+    indices = pd.MultiIndex.from_tuples(list(np.ndindex(y_size, x_size)))
+
+    df = pd.DataFrame(columns=['isSolid', 'leftLength', 'leftIsSolid', 'topLength', 'topIsSolid'], index=indices)
+
+    for y in y_grid:
+        for x in x_grid:
+
+            is_solid = bool(img[y, x])
+            left_length = 0
+            left_is_solid = -1
+            rigth_length = 0
+            rigth_is_solid = -1
+
+            if x > 0:
+                prev_x = x - 1
+                left_length = eds_x.data[y, prev_x]
+                left_is_solid = bool(img[y, prev_x])
+
+            if y > 0:
+                prev_y = y - 1
+                rigth_length = eds_y.data[prev_y, x]
+                rigth_is_solid = bool(img[prev_y, x])
+
+            df.loc[(y, x)] = pd.Series({
+                'isSolid': is_solid, 
+                'leftLength': left_length, 
+                'leftIsSolid': left_is_solid, 
+                'topLength': rigth_length, 
+                'topIsSolid': rigth_is_solid,
+            })
+
+    df = df.astype(np.int32)
+
+    print(df.info())
+    print(df.shape)
+    
+    return df
