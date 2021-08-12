@@ -353,3 +353,64 @@ def dataframe_from_image(img):
     print(df.shape)
     
     return df
+
+
+def pattern_dataframe_from_image(img):
+    
+    img = img.astype(np.int32)
+    y_size = img.shape[-2]
+    x_size = img.shape[-1]
+    y_grid = np.arange(y_size)
+    x_grid = np.arange(x_size)
+    indices = pd.MultiIndex.from_tuples(list(np.ndindex(y_size, x_size)))
+
+    df = pd.DataFrame(columns=['isSolid', 'left', 'topleft', 'top', 'topright', 'pattern'], index=indices)
+
+    for y in y_grid:
+        for x in x_grid:
+
+            is_solid = img[y, x]
+
+            left = -1
+            topleft = -1
+            top = -1
+            topright = -1
+                            
+            prev_x = x - 1
+            next_x = x + 1
+
+            prev_y = y - 1
+
+            if y == 0 and x == 0:
+                pass
+            elif y == 0:
+                left = img[y, prev_x]
+            elif x == 0:
+                top = img[prev_y, x]
+                topright = img[prev_y, next_x]
+            elif x == x_size - 1:
+                left = img[y, prev_x]
+                topleft = img[prev_y, prev_x]
+                top = img[prev_y, x]
+            else:
+                left = img[y, prev_x]
+                topleft = img[prev_y, prev_x]
+                top = img[prev_y, x]
+                topright = img[prev_y, next_x]
+                
+            df.loc[(y, x)] = pd.Series({
+                'isSolid': is_solid,
+                'left': left, 
+                'topleft': topleft, 
+                'top': top, 
+                'topright': topright,
+                'pattern': ''.join([str(i) for i in [left, topleft, top, topright]]),
+            })
+
+    df[['isSolid', 'left', 'topleft', 'top', 'topright']] = df[['isSolid', 'left', 'topleft', 'top', 'topright']].astype(np.int32)
+
+    print(df.info())
+    print(df.shape)
+    
+    return df
+
