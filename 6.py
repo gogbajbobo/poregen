@@ -60,6 +60,52 @@ axes.imshow(img_show)
 print(f'porosity: { helper.image_porosity(img) }')
 
 # %% tags=[]
+p_df = helper.pattern_dataframe_from_image(img)
+p_df
+
+# %% tags=[]
+p_corr = p_df.loc[:, p_df.columns != 'pattern'].corr()
+p_corr.style.background_gradient(axis=None)
+
+# %% tags=[]
+p_df.pattern.hist(figsize=(20, 5), bins=p_df.pattern.nunique())
+
+# %% tags=[]
+X = p_df[['left', 'topleft', 'top', 'topright']]
+Y = p_df[['isSolid']]
+x_train, x_test, y_train, y_test = train_test_split(X, Y)
+log_reg = sm.Logit(y_train, x_train).fit()
+print(log_reg.summary())
+predicted_train = log_reg.predict(x_train) > .5
+predicted_test = log_reg.predict(x_test) > .5
+print(f'train score: {(predicted_train.to_numpy().ravel() == y_train.to_numpy().ravel()).mean()}')
+print(f'test score: {(predicted_test.to_numpy().ravel() == y_test.to_numpy().ravel()).mean()}')
+
+# %% tags=[]
+skl_log_reg = LogisticRegression(fit_intercept = False, penalty='none')
+X_train = x_train
+Y_train = y_train.to_numpy().ravel()
+X_test = x_test
+Y_test = y_test.to_numpy().ravel()
+skl_log_reg.fit(X_train, Y_train)
+print(skl_log_reg.coef_)
+print(f'train: {skl_log_reg.score(X_train, Y_train)}')
+print(f'test: {skl_log_reg.score(X_test, Y_test)}')
+plot_confusion_matrix(skl_log_reg, X_test, Y_test)
+
+# %%
+predict_image = skl_log_reg.predict(X)
+y = [y for y, x in Y[Y.isSolid != predict_image].index]
+x = [x for y, x in Y[Y.isSolid != predict_image].index]
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+img_show = img if dim == 2 else img[0, :, :] if dim == 3 else []
+axes[0].imshow(img_show)
+axes[1].imshow(predict_image.reshape(img.shape))
+axes[2].imshow(img_show)
+axes[2].scatter(x, y, color='red', marker='.')
+
+# %% tags=[]
 df = helper.dataframe_from_image(img)
 df.head()
 
