@@ -83,7 +83,3 @@ axis[2].imshow(img)
 axis[2].scatter([x for y, x in y_borders_solid], [y for y, x in y_borders_solid], c='red', marker='.')
 axis[3].imshow(img)
 axis[3].scatter([x for y, x in y_borders_void], [y for y, x in y_borders_void], c='white', marker='.')
-
-# %% tags=[]
-
-# %%
