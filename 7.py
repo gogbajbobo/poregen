@@ -39,10 +39,10 @@ from sklearn.model_selection import train_test_split
 import helper
 
 # %% tags=[]
-im_size = 128
+im_size = 64
 dim = 2
 porosity = 0.5
-blobiness = 2
+blobiness = 1
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 
 np.random.seed(0)
@@ -104,37 +104,24 @@ axes[1].imshow(predict_image.reshape(img.shape))
 axes[2].imshow(img_show)
 axes[2].scatter(x, y, color='red', marker='.')
 
-# %% tags=[]
-np.random.seed(1)
-img_test = ~ps.generators.blobs(im_shape, porosity=porosity, blobiness=blobiness)
-fig, axes = plt.subplots(1, 1, figsize=(5, 5))
-img_test_show = img_test if dim == 2 else img_test[0, :, :] if dim == 3 else []
-axes.imshow(img_test_show)
-print(f'porosity: { helper.image_porosity(img_test) }')
-
-# %% tags=[]
-df_test = helper.dataframe_with_distances_from_image(img_test)
-df_test
-
-# %% tags=[]
-XX = df_test[['xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid']]
-YY = df_test[['isSolid']]
-
-predict_image = skl_log_reg.predict(XX)
-incorrect_idxs = YY[YY.isSolid != predict_image].index
-
-y = [y for y, x in incorrect_idxs]
-x = [x for y, x in incorrect_idxs]
-
-fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-img_test_show = img_test if dim == 2 else img_test[0, :, :] if dim == 3 else []
-axes[0].imshow(img_test_show)
-axes[1].imshow(predict_image.reshape(img_test.shape))
-axes[2].imshow(img_test_show)
-axes[2].scatter(x, y, color='red', marker='.')
-
-# %% tags=[]
-print(f'score: {skl_log_reg.score(XX, YY)}')
-plot_confusion_matrix(skl_log_reg, XX, YY)
-
 # %%
+xds = np.full(img.shape, -1, dtype=np.int32)
+xdv = np.full(img.shape, -1, dtype=np.int32)
+yds = np.full(img.shape, -1, dtype=np.int32)
+ydv = np.full(img.shape, -1, dtype=np.int32)
+new_img = np.full(img.shape, -1, dtype=np.int32)
+
+for y in np.arange(img.shape[-2]):
+    for x in np.arange(img.shape[-1]):
+        
+        if y == 0 and x == 0:
+            result = sp.stats.bernoulli.rvs(porosity)
+            new_img[y, x] = result
+            if result:
+                xds[y, x] = 0
+                yds[y, x] = 0
+            else:
+                xdv[y, x] = 0
+                ydv[y, x] = 0
+        elif y = 0:
+            
