@@ -472,3 +472,37 @@ def border_distances_for_image(img):
             y_distances_void[y, x] = get_distance(p, y_borders_void, direction='y')
 
     return x_distances_solid, x_distances_void, y_distances_solid, y_distances_void
+
+
+def dataframe_with_distances_from_image(img, distances=None):
+    
+    if distances is None:
+        distances = border_distances_for_image(img)
+    
+    x_distances_solid, x_distances_void, y_distances_solid, y_distances_void = distances
+
+    y_size = img.shape[-2]
+    x_size = img.shape[-1]
+    y_grid = np.arange(y_size)
+    x_grid = np.arange(x_size)
+    indices = pd.MultiIndex.from_tuples(list(np.ndindex(y_size, x_size)))
+
+    df = pd.DataFrame(columns=['isSolid', 'xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid'], index=indices)
+
+    for y in y_grid:
+        for x in x_grid:
+
+            df.loc[(y, x)] = pd.Series({
+                'isSolid': img[y, x], 
+                'xDistanceSolid': x_distances_solid[y, x],
+                'xDistanceVoid': x_distances_void[y, x],
+                'yDistanceSolid': y_distances_solid[y, x],
+                'yDistanceVoid': y_distances_void[y, x],
+            })
+
+    df = df.astype(np.int32)
+
+    print(df.info())
+    print(df.shape)
+    
+    return df
