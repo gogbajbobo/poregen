@@ -83,3 +83,38 @@ axis[2].imshow(img)
 axis[2].scatter([x for y, x in y_borders_solid], [y for y, x in y_borders_solid], c='red', marker='.')
 axis[3].imshow(img)
 axis[3].scatter([x for y, x in y_borders_void], [y for y, x in y_borders_void], c='white', marker='.')
+
+# %% tags=[]
+p = (16, 16)
+# print(x_borders_solid)
+print(np.min([p[-1] - xb[-1] for xb in x_borders_solid if xb[-2] == p[-2] and xb[-1] <= p[-1]]))
+
+# %% tags=[]
+x_distances_solid = np.empty(img.shape, dtype=np.int32)
+x_distances_void = np.empty(img.shape, dtype=np.int32)
+y_distances_solid = np.empty(img.shape, dtype=np.int32)
+y_distances_void = np.empty(img.shape, dtype=np.int32)
+
+def get_distance(point, borders, direction='x'):
+    fixed = -2 if direction == 'x' else -1
+    searched = -1 if direction == 'x' else -2
+    distances = [
+        point[searched] - b[searched] for b in borders if b[fixed] == point[fixed] and b[searched] <= point[searched]
+    ]
+    return np.min(distances) if len(distances) else -1
+
+for y in np.arange(img.shape[-2]):
+    for x in np.arange(img.shape[-1]):
+        p = (y, x)
+        x_distances_solid[y, x] = get_distance(p, x_borders_solid)
+        x_distances_void[y, x] = get_distance(p, x_borders_void)
+        y_distances_solid[y, x] = get_distance(p, y_borders_solid, direction='y')
+        y_distances_void[y, x] = get_distance(p, y_borders_void, direction='y')
+
+fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+axes[0].imshow(x_distances_solid)
+axes[1].imshow(x_distances_void)
+axes[2].imshow(y_distances_solid)
+axes[3].imshow(y_distances_void)
+
+# %%
