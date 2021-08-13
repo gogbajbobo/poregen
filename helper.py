@@ -491,13 +491,33 @@ def dataframe_with_distances_from_image(img, distances=None):
 
     for y in y_grid:
         for x in x_grid:
+            
+            is_solid = img[y, x]
+            xds = -1
+            xdv = -1
+            yds = -1
+            ydv = -1
+            
+            if y == 0 and x == 0:
+                pass
+            elif y == 0:
+                xds = x_distances_solid[y, x - 1]
+                xdv = x_distances_void[y, x - 1]
+            elif x == 0:
+                yds = y_distances_solid[y - 1, x]
+                ydv = y_distances_void[y - 1, x]
+            else:
+                xds = x_distances_solid[y - 1, x - 1]
+                xdv = x_distances_void[y - 1, x - 1]
+                yds = y_distances_solid[y - 1, x - 1]
+                ydv = y_distances_void[y - 1, x - 1]
 
             df.loc[(y, x)] = pd.Series({
-                'isSolid': img[y, x], 
-                'xDistanceSolid': x_distances_solid[y, x],
-                'xDistanceVoid': x_distances_void[y, x],
-                'yDistanceSolid': y_distances_solid[y, x],
-                'yDistanceVoid': y_distances_void[y, x],
+                'isSolid': is_solid, 
+                'xDistanceSolid': xds,
+                'xDistanceVoid': xdv,
+                'yDistanceSolid': yds,
+                'yDistanceVoid': ydv,
             })
 
     df = df.astype(np.int32)
