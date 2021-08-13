@@ -16,11 +16,11 @@
 # %%
 # calc distance from edges separatly for solid and void
 
-# %%
+# %% tags=[]
 # %load_ext autoreload
 # %autoreload 2
 
-# %%
+# %% tags=[]
 import porespy as ps
 import numpy as np
 import pandas as pd
@@ -33,7 +33,7 @@ from matplotlib import colors
 import helper
 
 # %% tags=[]
-im_size = 32
+im_size = 64
 dim = 2
 porosity = 0.5
 blobiness = 0.5
@@ -53,6 +53,8 @@ x_borders = None
 x_borders_solid = None
 x_borders_void = None
 y_borders = None
+y_borders_solid = None
+y_borders_void = None
 
 for y in np.arange(img.shape[-2]):
     row = img[y, :]
@@ -83,11 +85,6 @@ axis[2].imshow(img)
 axis[2].scatter([x for y, x in y_borders_solid], [y for y, x in y_borders_solid], c='red', marker='.')
 axis[3].imshow(img)
 axis[3].scatter([x for y, x in y_borders_void], [y for y, x in y_borders_void], c='white', marker='.')
-
-# %% tags=[]
-p = (16, 16)
-# print(x_borders_solid)
-print(np.min([p[-1] - xb[-1] for xb in x_borders_solid if xb[-2] == p[-2] and xb[-1] <= p[-1]]))
 
 # %% tags=[]
 x_distances_solid = np.empty(img.shape, dtype=np.int32)
