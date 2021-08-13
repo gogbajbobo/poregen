@@ -110,8 +110,11 @@ df = helper.dataframe_from_image(img)
 df.head()
 
 # %% tags=[]
-dff = df[(df.isSolid != df.leftIsSolid) | (df.isSolid != df.topIsSolid)]
+dff = df[(df.leftIsSolid == True) & (df.topIsSolid == True)]
 dff
+
+# %% tags=[]
+dff[dff.isSolid == False].leftLength.hist()
 
 # %% tags=[]
 X = dff[['leftLength', 'leftIsSolid', 'topLength', 'topIsSolid']]
