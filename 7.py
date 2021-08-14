@@ -41,7 +41,7 @@ import helper
 # %% tags=[]
 im_size = 64
 dim = 2
-porosity = 0.5
+porosity = 0.3
 blobiness = 1
 im_shape = np.ones(dim, dtype=np.int32) * im_size
 
@@ -63,7 +63,8 @@ axes[2].imshow(y_distances_solid)
 axes[3].imshow(y_distances_void)
 
 # %% tags=[]
-df = helper.dataframe_with_distances_for_image(img, (x_distances_solid, x_distances_void, y_distances_solid, y_distances_void))
+distances = (x_distances_solid, x_distances_void, y_distances_solid, y_distances_void)
+df = helper.dataframe_with_distances_for_image(img, distances, neighbor_values=False)
 df
 
 # %% tags=[]
@@ -116,24 +117,97 @@ axes[1].imshow(predict_image.reshape(img.shape))
 axes[2].imshow(img_show)
 axes[2].scatter(x, y, color='red', marker='.')
 
-# %%
+# %% tags=[]
+pd.crosstab(dff.xDistanceSolid, dff.isSolid).plot(kind='bar', figsize=(15, 5))
+
+# %% tags=[]
+pd.crosstab(dff.xDistanceVoid, dff.isSolid).plot(kind='bar', figsize=(15, 5))
+
+# %% tags=[]
+skl_log_reg.predict_proba([[10, 3, 0, 0]])
+
+# %% tags=[]
 xds = np.full(img.shape, -1, dtype=np.int32)
 xdv = np.full(img.shape, -1, dtype=np.int32)
 yds = np.full(img.shape, -1, dtype=np.int32)
 ydv = np.full(img.shape, -1, dtype=np.int32)
 new_img = np.full(img.shape, -1, dtype=np.int32)
 
-for y in np.arange(img.shape[-2]):
-    for x in np.arange(img.shape[-1]):
-        
-        if y == 0 and x == 0:
-            result = sp.stats.bernoulli.rvs(porosity)
-            new_img[y, x] = result
-            if result:
-                xds[y, x] = 0
-                yds[y, x] = 0
-            else:
-                xdv[y, x] = 0
-                ydv[y, x] = 0
-        elif y = 0:
+new_img[0, :] = img[0, :]
+new_img[:, 0] = img[:, 0]
+xds[0, :] = x_distances_solid[0, :]
+xds[:, 0] = x_distances_solid[:, 0]
+xdv[0, :] = x_distances_void[0, :]
+xdv[:, 0] = x_distances_void[:, 0]
+yds[0, :] = y_distances_solid[0, :]
+yds[:, 0] = y_distances_solid[:, 0]
+ydv[0, :] = y_distances_void[0, :]
+ydv[:, 0] = y_distances_void[:, 0]
+
+def calc_result(values):
+    p = skl_log_reg.predict_proba([values])[0][1]
+#     return skl_log_reg.predict([values])
+    return sp.stats.bernoulli.rvs(p)
+
+for y in np.arange(img.shape[-2])[1:]:
+    for x in np.arange(img.shape[-1])[1:]:
             
+            if y == 0 and x == 0:
+                result = calc_result([0, 0, 0, 0])
+                new_img[y, x] = result
+                
+                xds[y, x] = 0 if result == 1 else -1
+                xdv[y, x] = 0 if result == 0 else -1
+                yds[y, x] = 0 if result == 1 else -1
+                ydv[y, x] = 0 if result == 0 else -1
+
+            elif y == 0:
+                result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, 0, 0])
+                new_img[y, x] = result
+                
+                if new_img[y, x - 1] == result:
+                    xds[y, x] = xds[y, x - 1] + 1
+                    xdv[y, x] = xdv[y, x - 1] + 1
+                else:
+                    xds[y, x] = 0 if result == 1 else xds[y, x - 1] + 1
+                    xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
+                    
+                yds[y, x] = 0 if result == 1 else -1
+                ydv[y, x] = 0 if result == 0 else -1
+                
+            elif x == 0:
+                result = calc_result([0, 0, yds[y - 1, x] + 1, ydv[y - 1, x] + 1])
+                new_img[y, x] = result
+                
+                if new_img[y - 1, x] == result:
+                    yds[y, x] = yds[y - 1, x] + 1
+                    ydv[y, x] = ydv[y - 1, x] + 1
+                else:
+                    yds[y, x] = 0 if result == 1 else yds[y, x - 1] + 1
+                    ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
+                    
+                xds[y, x] = 0 if result == 1 else -1
+                xdv[y, x] = 0 if result == 0 else -1
+
+            else:
+                result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, yds[y -1, x] + 1, ydv[y - 1, x] + 1])
+                new_img[y, x] = result
+                
+                if new_img[y, x - 1] == result:
+                    xds[y, x] = xds[y, x - 1] + 1
+                    xdv[y, x] = xdv[y, x - 1] + 1
+                else:
+                    xds[y, x] = 0 if result == 1 else xds[y, x - 1] + 1
+                    xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
+                    
+                if new_img[y - 1, x] == result:
+                    yds[y, x] = yds[y - 1, x] + 1
+                    ydv[y, x] = ydv[y - 1, x] + 1
+                else:
+                    yds[y, x] = 0 if result == 1 else yds[y, x - 1] + 1
+                    ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
+
+
+plt.imshow(new_img)
+
+# %%
