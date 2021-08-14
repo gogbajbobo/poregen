@@ -474,7 +474,7 @@ def border_distances_for_image(img):
     return x_distances_solid, x_distances_void, y_distances_solid, y_distances_void
 
 
-def dataframe_with_distances_for_image(img, distances=None):
+def dataframe_with_distances_for_image(img, distances=None, neighbor_values=True):
     
     if distances is None:
         distances = border_distances_for_image(img)
@@ -492,33 +492,43 @@ def dataframe_with_distances_for_image(img, distances=None):
     for y in y_grid:
         for x in x_grid:
             
-            is_solid = img[y, x]
-            xds = -1
-            xdv = -1
-            yds = -1
-            ydv = -1
-            
-            if y == 0 and x == 0:
-                pass
-            elif y == 0:
-                xds = x_distances_solid[y, x - 1]
-                xdv = x_distances_void[y, x - 1]
-            elif x == 0:
-                yds = y_distances_solid[y - 1, x]
-                ydv = y_distances_void[y - 1, x]
-            else:
-                xds = x_distances_solid[y - 1, x - 1]
-                xdv = x_distances_void[y - 1, x - 1]
-                yds = y_distances_solid[y - 1, x - 1]
-                ydv = y_distances_void[y - 1, x - 1]
+            if neighbor_values:
+                is_solid = img[y, x]
+                xds = -1
+                xdv = -1
+                yds = -1
+                ydv = -1
 
-            df.loc[(y, x)] = pd.Series({
-                'isSolid': is_solid, 
-                'xDistanceSolid': xds,
-                'xDistanceVoid': xdv,
-                'yDistanceSolid': yds,
-                'yDistanceVoid': ydv,
-            })
+                if y == 0 and x == 0:
+                    pass
+                elif y == 0:
+                    xds = x_distances_solid[y, x - 1]
+                    xdv = x_distances_void[y, x - 1]
+                elif x == 0:
+                    yds = y_distances_solid[y - 1, x]
+                    ydv = y_distances_void[y - 1, x]
+                else:
+                    xds = x_distances_solid[y - 1, x - 1]
+                    xdv = x_distances_void[y - 1, x - 1]
+                    yds = y_distances_solid[y - 1, x - 1]
+                    ydv = y_distances_void[y - 1, x - 1]
+
+                df.loc[(y, x)] = pd.Series({
+                    'isSolid': is_solid, 
+                    'xDistanceSolid': xds,
+                    'xDistanceVoid': xdv,
+                    'yDistanceSolid': yds,
+                    'yDistanceVoid': ydv,
+                })
+                
+            else:
+                df.loc[(y, x)] = pd.Series({
+                    'isSolid': img[y, x], 
+                    'xDistanceSolid': x_distances_solid[y, x],
+                    'xDistanceVoid': x_distances_void[y, x],
+                    'yDistanceSolid': y_distances_solid[y, x],
+                    'yDistanceVoid': y_distances_void[y, x],
+                })
 
     df = df.astype(np.int32)
 
