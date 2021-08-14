@@ -78,20 +78,15 @@ dff.corr().style.background_gradient(axis=None)
 dff.describe()
 
 # %% tags=[]
-dfff = dff[~((dff.isSolid == True) & (dff.xDistanceSolid > 10))]
-dfff = dfff[~((dff.isSolid == False) & (dff.xDistanceSolid < 10))]
-dfff.describe()
+pd.crosstab(dff.xDistanceSolid, dff.isSolid).plot(kind='bar', figsize=(15, 5), log='y')
 
-# %% tags=[]
-dfff[dfff.xDistanceSolid < 10].describe()
-
-# %% tags=[]
-pd.crosstab(dfff.xDistanceSolid, dfff.isSolid).plot(kind='bar', figsize=(15, 5), log='y')
+# %%
+pd.crosstab(dff.xDistanceVoid, dff.isSolid).plot(kind='bar', figsize=(15, 5), log='y')
 
 # %% tags=[]
 # X = df[['xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid']]
-X = dfff[['xDistanceSolid']]
-Y = dfff[['isSolid']]
+X = df[['xDistanceSolid', 'yDistanceSolid']]
+Y = df[['isSolid']]
 x_train, x_test, y_train, y_test = train_test_split(X, Y)
 log_reg = sm.Logit(y_train, x_train).fit()
 print(log_reg.summary())
@@ -101,7 +96,7 @@ print(f'train score: {(predicted_train.to_numpy().ravel() == y_train.to_numpy().
 print(f'test score: {(predicted_test.to_numpy().ravel() == y_test.to_numpy().ravel()).mean()}')
 
 # %% tags=[]
-skl_log_reg = LogisticRegression(fit_intercept = False, penalty='none')
+skl_log_reg = LogisticRegression()
 X_train = x_train
 Y_train = y_train.to_numpy().ravel()
 X_test = x_test
@@ -113,8 +108,8 @@ print(f'test: {skl_log_reg.score(X_test, Y_test)}')
 plot_confusion_matrix(skl_log_reg, X_test, Y_test)
 
 # %% tags=[]
-plot_range = np.arange(-100, 100)
-plt.plot(plot_range, [skl_log_reg.predict_proba([[i]])[0][1] for i in plot_range])
+plot_range = np.arange(0, 100)
+plt.plot(plot_range, [skl_log_reg.predict_proba([[i, 0]])[0][1] for i in plot_range])
 
 # %%
 parameters = {'C': [1e-07, 1e-06, 1e-05, 1e-04, .001, .01, .1, 1, 10, 100], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
@@ -155,84 +150,88 @@ skl_log_reg.predict_proba([[10, 3, 0, 0]])
 
 # %% tags=[]
 xds = np.full(img.shape, -1, dtype=np.int32)
-xdv = np.full(img.shape, -1, dtype=np.int32)
+# xdv = np.full(img.shape, -1, dtype=np.int32)
 yds = np.full(img.shape, -1, dtype=np.int32)
-ydv = np.full(img.shape, -1, dtype=np.int32)
+# ydv = np.full(img.shape, -1, dtype=np.int32)
 new_img = np.full(img.shape, -1, dtype=np.int32)
 
 new_img[0, :] = img[0, :]
 new_img[:, 0] = img[:, 0]
 xds[0, :] = x_distances_solid[0, :]
 xds[:, 0] = x_distances_solid[:, 0]
-xdv[0, :] = x_distances_void[0, :]
-xdv[:, 0] = x_distances_void[:, 0]
+# xdv[0, :] = x_distances_void[0, :]
+# xdv[:, 0] = x_distances_void[:, 0]
 yds[0, :] = y_distances_solid[0, :]
 yds[:, 0] = y_distances_solid[:, 0]
-ydv[0, :] = y_distances_void[0, :]
-ydv[:, 0] = y_distances_void[:, 0]
+# ydv[0, :] = y_distances_void[0, :]
+# ydv[:, 0] = y_distances_void[:, 0]
 
 def calc_result(values):
     p = skl_log_reg.predict_proba([values])[0][1]
-#     return skl_log_reg.predict([values])
     return sp.stats.bernoulli.rvs(p)
+#     return skl_log_reg.predict([values])
 
 for y in np.arange(img.shape[-2])[1:]:
     for x in np.arange(img.shape[-1])[1:]:
             
             if y == 0 and x == 0:
-                result = calc_result([0, 0, 0, 0])
+#                 result = calc_result([0, 0, 0, 0])
+                result = calc_result([0, 0])
                 new_img[y, x] = result
                 
                 xds[y, x] = 0 if result == 1 else -1
-                xdv[y, x] = 0 if result == 0 else -1
+#                 xdv[y, x] = 0 if result == 0 else -1
                 yds[y, x] = 0 if result == 1 else -1
-                ydv[y, x] = 0 if result == 0 else -1
+#                 ydv[y, x] = 0 if result == 0 else -1
 
             elif y == 0:
-                result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, 0, 0])
+#                 result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, 0, 0])
+                result = calc_result([xds[y, x - 1] + 1, 0])
                 new_img[y, x] = result
                 
                 if new_img[y, x - 1] == result:
                     xds[y, x] = xds[y, x - 1] + 1
-                    xdv[y, x] = xdv[y, x - 1] + 1
+#                     xdv[y, x] = xdv[y, x - 1] + 1
                 else:
                     xds[y, x] = 0 if result == 1 else xds[y, x - 1] + 1
-                    xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
+#                     xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
                     
                 yds[y, x] = 0 if result == 1 else -1
-                ydv[y, x] = 0 if result == 0 else -1
+#                 ydv[y, x] = 0 if result == 0 else -1
                 
             elif x == 0:
-                result = calc_result([0, 0, yds[y - 1, x] + 1, ydv[y - 1, x] + 1])
+#                 result = calc_result([0, 0, yds[y - 1, x] + 1, ydv[y - 1, x] + 1])
+                result = calc_result([0, yds[y - 1, x] + 1])
                 new_img[y, x] = result
                 
                 if new_img[y - 1, x] == result:
                     yds[y, x] = yds[y - 1, x] + 1
-                    ydv[y, x] = ydv[y - 1, x] + 1
+#                     ydv[y, x] = ydv[y - 1, x] + 1
                 else:
                     yds[y, x] = 0 if result == 1 else yds[y, x - 1] + 1
-                    ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
+#                     ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
                     
                 xds[y, x] = 0 if result == 1 else -1
-                xdv[y, x] = 0 if result == 0 else -1
+#                 xdv[y, x] = 0 if result == 0 else -1
 
             else:
-                result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, yds[y -1, x] + 1, ydv[y - 1, x] + 1])
+#                 result = calc_result([xds[y, x - 1] + 1, xdv[y, x - 1] + 1, yds[y -1, x] + 1, ydv[y - 1, x] + 1])
+                result = calc_result([xds[y, x - 1] + 1, yds[y -1, x] + 1])
                 new_img[y, x] = result
                 
                 if new_img[y, x - 1] == result:
                     xds[y, x] = xds[y, x - 1] + 1
-                    xdv[y, x] = xdv[y, x - 1] + 1
+#                     xdv[y, x] = xdv[y, x - 1] + 1
                 else:
                     xds[y, x] = 0 if result == 1 else xds[y, x - 1] + 1
-                    xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
+#                     xdv[y, x] = 0 if result == 0 else xdv[y, x - 1] + 1
                     
                 if new_img[y - 1, x] == result:
                     yds[y, x] = yds[y - 1, x] + 1
-                    ydv[y, x] = ydv[y - 1, x] + 1
+#                     ydv[y, x] = ydv[y - 1, x] + 1
                 else:
                     yds[y, x] = 0 if result == 1 else yds[y, x - 1] + 1
-                    ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
+#                     ydv[y, x] = 0 if result == 0 else ydv[y, x - 1] + 1
 
 
 plt.imshow(new_img)
