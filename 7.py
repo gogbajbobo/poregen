@@ -75,12 +75,23 @@ dff = df[~df.isin([-1]).any(axis=1)]
 dff.corr().style.background_gradient(axis=None)
 
 # %% tags=[]
-pd.crosstab(dff.xDistanceSolid, dff.isSolid).plot(kind='bar', figsize=(15, 5))
+dff.describe()
 
 # %% tags=[]
-X = df[['xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid']]
-# X = df[['xDistanceSolid', 'xDistanceVoid']]
-Y = df[['isSolid']]
+dfff = dff[~((dff.isSolid == True) & (dff.xDistanceSolid > 10))]
+dfff = dfff[~((dff.isSolid == False) & (dff.xDistanceSolid < 10))]
+dfff.describe()
+
+# %% tags=[]
+dfff[dfff.xDistanceSolid < 10].describe()
+
+# %% tags=[]
+pd.crosstab(dfff.xDistanceSolid, dfff.isSolid).plot(kind='bar', figsize=(15, 5), log='y')
+
+# %% tags=[]
+# X = df[['xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid']]
+X = dfff[['xDistanceSolid']]
+Y = dfff[['isSolid']]
 x_train, x_test, y_train, y_test = train_test_split(X, Y)
 log_reg = sm.Logit(y_train, x_train).fit()
 print(log_reg.summary())
@@ -103,7 +114,23 @@ plot_confusion_matrix(skl_log_reg, X_test, Y_test)
 
 # %% tags=[]
 plot_range = np.arange(-100, 100)
-plt.plot(plot_range, [skl_log_reg.predict_proba([[i, 0, 0, 0]])[0][1] for i in plot_range])
+plt.plot(plot_range, [skl_log_reg.predict_proba([[i]])[0][1] for i in plot_range])
+
+# %%
+parameters = {'C': [1e-07, 1e-06, 1e-05, 1e-04, .001, .01, .1, 1, 10, 100], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']}
+Logistic = LogisticRegression(max_iter=10000)
+grid_search_CV = GridSearchCV(Logistic, parameters)
+grid_search_CV.fit(X_train, Y_train)
+print(f'best estimator: {grid_search_CV.best_estimator_}')
+print(f'best estimator coefs: {grid_search_CV.best_estimator_.coef_}')
+print(f'best score: {grid_search_CV.best_score_}')
+print(f'train accuracy: {grid_search_CV.best_estimator_.score(X_train, Y_train)}')
+print(f'test accuracy: {grid_search_CV.best_estimator_.score(X_test, Y_test)}')
+plot_confusion_matrix(grid_search_CV.best_estimator_, X_test, Y_test)
+
+# %% tags=[]
+plot_range = np.arange(-10000, 10000)
+plt.plot(plot_range, [grid_search_CV.best_estimator_.predict_proba([[i]])[0][1] for i in plot_range])
 
 # %% tags=[]
 predict_image = skl_log_reg.predict(X)
