@@ -63,14 +63,22 @@ axes[2].imshow(y_distances_solid)
 axes[3].imshow(y_distances_void)
 
 # %% tags=[]
-df = helper.dataframe_with_distances_from_image(img, (x_distances_solid, x_distances_void, y_distances_solid, y_distances_void))
+df = helper.dataframe_with_distances_for_image(img, (x_distances_solid, x_distances_void, y_distances_solid, y_distances_void))
 df
 
 # %% tags=[]
 df.corr().style.background_gradient(axis=None)
 
 # %% tags=[]
+dff = df[~df.isin([-1]).any(axis=1)]
+dff.corr().style.background_gradient(axis=None)
+
+# %% tags=[]
+pd.crosstab(dff.xDistanceSolid, dff.isSolid).plot(kind='bar', figsize=(15, 5))
+
+# %% tags=[]
 X = df[['xDistanceSolid', 'xDistanceVoid', 'yDistanceSolid', 'yDistanceVoid']]
+# X = df[['xDistanceSolid', 'xDistanceVoid']]
 Y = df[['isSolid']]
 x_train, x_test, y_train, y_test = train_test_split(X, Y)
 log_reg = sm.Logit(y_train, x_train).fit()
@@ -91,6 +99,10 @@ print(skl_log_reg.coef_)
 print(f'train: {skl_log_reg.score(X_train, Y_train)}')
 print(f'test: {skl_log_reg.score(X_test, Y_test)}')
 plot_confusion_matrix(skl_log_reg, X_test, Y_test)
+
+# %% tags=[]
+plot_range = np.arange(-100, 100)
+plt.plot(plot_range, [skl_log_reg.predict_proba([[i, 0, 0, 0]])[0][1] for i in plot_range])
 
 # %% tags=[]
 predict_image = skl_log_reg.predict(X)
