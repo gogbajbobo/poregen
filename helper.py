@@ -474,7 +474,7 @@ def border_distances_for_image(img):
     return x_distances_solid, x_distances_void, y_distances_solid, y_distances_void
 
 
-def dataframe_with_distances_from_image(img, distances=None):
+def dataframe_with_distances_for_image(img, distances=None):
     
     if distances is None:
         distances = border_distances_for_image(img)
