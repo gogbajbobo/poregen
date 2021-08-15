@@ -167,9 +167,9 @@ yds[:, 0] = y_distances_solid[:, 0]
 # ydv[:, 0] = y_distances_void[:, 0]
 
 def calc_result(values):
-    p = skl_log_reg.predict_proba([values])[0][1]
-    return sp.stats.bernoulli.rvs(p)
-#     return skl_log_reg.predict([values])
+#     p = skl_log_reg.predict_proba([values])[0][1]
+#     return sp.stats.bernoulli.rvs(p)
+    return skl_log_reg.predict([values])
 
 for y in np.arange(img.shape[-2])[1:]:
     for x in np.arange(img.shape[-1])[1:]:
