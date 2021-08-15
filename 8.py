@@ -71,15 +71,60 @@ vvdf = dff[(dff.leftIsSolid == False) & (dff.topIsSolid == False)][['isSolid', '
 svdf = dff[(dff.leftIsSolid == True) & (dff.topIsSolid == False)][['isSolid', 'leftLength', 'topLength']]
 vsdf = dff[(dff.leftIsSolid == False) & (dff.topIsSolid == True)][['isSolid', 'leftLength', 'topLength']]
 
+sss = ssdf[ssdf.isSolid == True]
+ssv = ssdf[ssdf.isSolid == False]
+vvs = vvdf[vvdf.isSolid == True]
+vvv = vvdf[vvdf.isSolid == False]
+svs = svdf[svdf.isSolid == True]
+svv = svdf[svdf.isSolid == False]
+vss = vsdf[vsdf.isSolid == True]
+vsv = vsdf[vsdf.isSolid == False]
+
+
 # %% tags=[]
-ssdf_hist, _, _ = np.histogram2d(ssdf.leftLength, ssdf.topLength, bins=[ssdf.leftLength.max() - 1, ssdf.topLength.max() - 1])
-vvdf_hist, _, _ = np.histogram2d(vvdf.leftLength, vvdf.topLength, bins=[vvdf.leftLength.max() - 1, vvdf.topLength.max() - 1])
-svdf_hist, _, _ = np.histogram2d(svdf.leftLength, svdf.topLength, bins=[svdf.leftLength.max() - 1, svdf.topLength.max() - 1])
-vsdf_hist, _, _ = np.histogram2d(vsdf.leftLength, vsdf.topLength, bins=[vsdf.leftLength.max() - 1, vsdf.topLength.max() - 1])
-fig, axes = plt.subplots(2, 2, figsize=(20, 20))
-sns.heatmap(ssdf_hist, annot=True, linewidths=.5, ax=axes[0, 0])
-sns.heatmap(vvdf_hist, annot=True, linewidths=.5, ax=axes[0, 1])
-sns.heatmap(svdf_hist, annot=True, linewidths=.5, ax=axes[1, 0])
-sns.heatmap(vsdf_hist, annot=True, linewidths=.5, ax=axes[1, 1])
+def df_hist(df):
+    df_hist, _, _ = np.histogram2d(df.leftLength, df.topLength, bins=[df.leftLength.max() - 1, df.topLength.max() - 1])
+    return df_hist
+
+sss_hist = df_hist(sss)
+ssv_hist = df_hist(ssv)
+vvs_hist = df_hist(vvs)
+vvv_hist = df_hist(vvv)
+svs_hist = df_hist(svs)
+svv_hist = df_hist(svv)
+vss_hist = df_hist(vss)
+vsv_hist = df_hist(vsv)
+
+fig, axes = plt.subplots(4, 2, figsize=(20, 40))
+sns.heatmap(sss_hist, annot=True, linewidths=.5, ax=axes[0, 0])
+sns.heatmap(ssv_hist, annot=True, linewidths=.5, ax=axes[0, 1])
+sns.heatmap(vvs_hist, annot=True, linewidths=.5, ax=axes[1, 0])
+sns.heatmap(vvv_hist, annot=True, linewidths=.5, ax=axes[1, 1])
+sns.heatmap(svs_hist, annot=True, linewidths=.5, ax=axes[2, 0])
+sns.heatmap(svv_hist, annot=True, linewidths=.5, ax=axes[2, 1])
+sns.heatmap(vss_hist, annot=True, linewidths=.5, ax=axes[3, 0])
+sns.heatmap(vsv_hist, annot=True, linewidths=.5, ax=axes[3, 1])
+
+# %% tags=[]
+sss_hist_kde = sp.stats.gaussian_kde(sss_hist[0, :])
+# plt.imshow(sss_hist_kde)
+# sss_hist.shape
+sss_hist_kde
+
+# %% tags=[]
+sss_hist[0, :]
+
+# %% tags=[]
+ds = np.array([[y, x] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1]) if sss_hist[y, x] > 0]).T
+weights = np.array([sss_hist[y, x] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1]) if sss_hist[y, x] > 0])
+sss_hist_kde = sp.stats.gaussian_kde(ds, weights=weights, bw_method=.01)
+sss_hist_kde_img = np.array([sss_hist_kde.pdf([y, x])[0] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1])]).reshape(sss_hist.shape)
+
+fig, axes = plt.subplots(1, 3, figsize=(30, 10))
+axes[0].imshow(sss_hist)
+axes[1].imshow(sss_hist_kde_img)
+axes[2].imshow(sss_hist_kde_img - sss_hist)
+# axes[0].imshow(sss_hist, norm=colors.LogNorm())
+# axes[1].imshow(sss_hist_kde_img, norm=colors.LogNorm())
 
 # %%
