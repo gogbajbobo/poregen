@@ -105,26 +105,33 @@ sns.heatmap(svv_hist, annot=True, linewidths=.5, ax=axes[2, 1])
 sns.heatmap(vss_hist, annot=True, linewidths=.5, ax=axes[3, 0])
 sns.heatmap(vsv_hist, annot=True, linewidths=.5, ax=axes[3, 1])
 
-# %% tags=[]
-sss_hist_kde = sp.stats.gaussian_kde(sss_hist[0, :])
-# plt.imshow(sss_hist_kde)
-# sss_hist.shape
-sss_hist_kde
 
 # %% tags=[]
-sss_hist[0, :]
+def calc_hist_kde(hist):
+    ds = np.array([[y, x] for y, x in np.ndindex(hist.shape[-2], hist.shape[-1]) if hist[y, x] > 0]).T
+    weights = np.array([hist[y, x] for y, x in np.ndindex(hist.shape[-2], hist.shape[-1]) if hist[y, x] > 0])
+    hist_kde = sp.stats.gaussian_kde(ds, weights=weights, bw_method=0.1)
+    hist_kde_img = np.array([hist_kde.pdf([y, x])[0] for y, x in np.ndindex(hist.shape[-2], hist.shape[-1])]).reshape(hist.shape)
+
+    fig, axes = plt.subplots(1, 3, figsize=(30, 10))
+#     axes[0].imshow(hist)
+#     axes[1].imshow(hist_kde_img)
+#     axes[2].imshow(hist_kde_img - hist)
+    axes[0].imshow(hist, norm=colors.LogNorm())
+    axes[1].imshow(hist_kde_img, norm=colors.LogNorm())
+    axes[2].imshow(hist_kde_img - hist, norm=colors.LogNorm())
+    
+    return hist_kde, hist_kde_img
+
 
 # %% tags=[]
-ds = np.array([[y, x] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1]) if sss_hist[y, x] > 0]).T
-weights = np.array([sss_hist[y, x] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1]) if sss_hist[y, x] > 0])
-sss_hist_kde = sp.stats.gaussian_kde(ds, weights=weights, bw_method=.01)
-sss_hist_kde_img = np.array([sss_hist_kde.pdf([y, x])[0] for y, x in np.ndindex(sss_hist.shape[-2], sss_hist.shape[-1])]).reshape(sss_hist.shape)
-
-fig, axes = plt.subplots(1, 3, figsize=(30, 10))
-axes[0].imshow(sss_hist)
-axes[1].imshow(sss_hist_kde_img)
-axes[2].imshow(sss_hist_kde_img - sss_hist)
-# axes[0].imshow(sss_hist, norm=colors.LogNorm())
-# axes[1].imshow(sss_hist_kde_img, norm=colors.LogNorm())
+sss_hist_kde, sss_hist_kde_img = calc_hist_kde(sss_hist)
+ssv_hist_kde, ssv_hist_kde_img = calc_hist_kde(ssv_hist)
+vvs_hist_kde, vvs_hist_kde_img = calc_hist_kde(vvs_hist)
+vvv_hist_kde, vvv_hist_kde_img = calc_hist_kde(vvv_hist)
+svs_hist_kde, svs_hist_kde_img = calc_hist_kde(svs_hist)
+svv_hist_kde, svv_hist_kde_img = calc_hist_kde(svv_hist)
+vss_hist_kde, vss_hist_kde_img = calc_hist_kde(vss_hist)
+vsv_hist_kde, vsv_hist_kde_img = calc_hist_kde(vsv_hist)
 
 # %%
