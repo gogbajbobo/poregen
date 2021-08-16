@@ -238,3 +238,52 @@ print(f'porosity: { helper.image_porosity(new_img) }')
 plt.imshow(img)
 
 # %%
+pattern_df = helper.pattern_dataframe_from_image(img)
+pattern_df
+
+# %%
+pattern_dff = pattern_df[~pattern_df.isin([-1]).any(axis=1)]
+pattern_dff
+
+# %% tags=[]
+groupped_dff = pattern_dff.groupby(['isSolid', 'pattern']).count()
+groupped_dff['count'] = groupped_dff.left
+groupped_dff['p'] = groupped_dff.left / groupped_dff.left.sum()
+groupped_dff = groupped_dff[['count', 'p']]
+groupped_dff
+
+# %% tags=[]
+new_im = np.empty(img.shape, dtype=np.int32)
+
+new_im[0, :] = img[0, :]
+new_im[:, 0] = img[:, 0]
+
+def calc_pattern_probability(pattern):
+    p_void = groupped_dff.loc[(0, pattern)].p if (0, pattern) in groupped_dff.index else 0
+    p_solid = groupped_dff.loc[(1, pattern)].p if (1, pattern) in groupped_dff.index else 0
+    if p_void == 0 and p_solid == 0:
+        return 0
+    p = p_solid / (p_solid + p_void)
+    return sp.stats.bernoulli.rvs(p)
+
+for y in np.arange(img.shape[-2])[1:]:
+    for x in np.arange(img.shape[-1])[1:-1]:
+        
+        left = new_im[y, x - 1]
+        topleft = new_im[y - 1, x - 1]
+        top = new_im[y - 1, x]
+        topright = new_im[y - 1, x + 1]
+        
+        pattern = ''.join([str(i) for i in [left, topleft, top, topright]])
+        
+        result = calc_pattern_probability(pattern)        
+        new_im[y, x] = result
+
+new_im[:, -1] = 0
+plt.imshow(new_im)
+print(f'porosity: { helper.image_porosity(new_im) }')
+
+# %%
+plt.imshow(img)
+
+# %%
